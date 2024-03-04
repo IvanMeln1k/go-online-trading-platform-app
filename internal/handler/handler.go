@@ -2,6 +2,8 @@ package handler
 
 import (
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/service"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/validate"
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -17,6 +19,10 @@ func NewHandler(services *service.Service) *Handler {
 
 func (h *Handler) InitRoutes() *echo.Echo {
 	router := echo.New()
+
+	router.Validator = &validate.CustomValidator{
+		Validator: validator.New(),
+	}
 
 	return router
 }
