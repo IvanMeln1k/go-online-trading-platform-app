@@ -1,10 +1,24 @@
 package service
 
-import "github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository"
+import (
+	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/email"
+)
 
-type Service struct {
+type Users interface {
 }
 
-func NewService(repo *repository.Repository) *Service {
-	return &Service{}
+type Auth interface {
+}
+
+type Service struct {
+	Users
+	Auth
+}
+
+func NewService(repo *repository.Repository, emailSender email.EmailSender) *Service {
+	return &Service{
+		Users: NewUsersService(repo),
+		Auth:  NewAuthService(),
+	}
 }

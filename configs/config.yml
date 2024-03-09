@@ -1,0 +1,17 @@
+port: "8000"
+
+db:
+  host: "localhost"
+  port: "5678"
+  user: "postgres"
+  name: "postgres"
+  sslmode: "disable"
+
+smtp:
+  email: "IvanMelnikovF@gmail.com"
+  host: "smtp.gmail.com"
+  port: "587"
+
+tokens:
+  refreshTTL: "60d"
+  emailTTL: "1h"

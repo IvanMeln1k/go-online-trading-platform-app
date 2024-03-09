@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type EmailSender struct {
+type SMTPSender struct {
 	Email string
 	Pass  string
 	Host  string
@@ -19,20 +19,26 @@ type EmailSender struct {
 	auth  smtp.Auth
 }
 
+type EmailSender interface {
+	Send(templatePath string, emailTo string, subject string,
+		data interface{}) error
+}
+
 var (
 	ErrInvalidEmail = errors.New("email is invalid")
 )
 
-func NewEmailSender(email, pass, host, port string) (*EmailSender, error) {
+func NewEmailSender(email, pass, host, port string) (*SMTPSender, error) {
 	if err := validateEmail(email); err != nil {
 		return nil, ErrInvalidEmail
 	}
-	return &EmailSender{
+	auth := smtp.PlainAuth("", email, pass, host)
+	return &SMTPSender{
 		Email: email,
 		Pass:  pass,
 		Host:  host,
 		Port:  port,
-		auth:  smtp.PlainAuth("", email, pass, host),
+		auth:  auth,
 	}, nil
 }
 
@@ -50,8 +56,9 @@ func validateEmail(email string) error {
 	return nil
 }
 
-func (e *EmailSender) Send(templatePath string, emailTo string, subject string,
+func (e *SMTPSender) Send(templatePath string, emailTo string, subject string,
 	data interface{}) error {
+
 	t, err := template.ParseFiles(templatePath)
 	if err != nil {
 		logrus.Error("error parse html template: %w", err)
@@ -65,7 +72,7 @@ func (e *EmailSender) Send(templatePath string, emailTo string, subject string,
 		logrus.Error("error execute html template: %w", err)
 		return err
 	}
-	msg := fmt.Sprintf("Subject: %s\n", subject) + mime + buf.String()
+	msg := fmt.Sprintf("To: %s\nSubject: %s\n", emailTo, subject) + mime + buf.String()
 
 	to := []string{
 		emailTo,
