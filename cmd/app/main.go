@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/handler"
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository"
@@ -36,13 +37,24 @@ func main() {
 		logrus.Fatalf("error connect to postgres db: %s", err)
 	}
 
+	rdbNum, err := strconv.Atoi(viper.GetString("rdb.db"))
+	if err != nil {
+		logrus.Fatalf("invalid number redis db")
+	}
+	rdb := database.NewRedisDB(database.RedisConfig{
+		Host:     viper.GetString("rdb.host"),
+		Port:     viper.GetString("rdb.port"),
+		Password: viper.GetString("rdb.password"),
+		DB:       rdbNum,
+	})
+
 	emailSender, err := email.NewEmailSender("IvanMelnikovF@gmail.com", os.Getenv("SMTP_PASS"),
 		viper.GetString("smtp.host"), viper.GetString("smtp.port"))
 	if err != nil {
 		logrus.Fatalf("error create email sender: %s", err)
 	}
 
-	repos := repository.NewRepository(db)
+	repos := repository.NewRepository(db, rdb)
 	services := service.NewService(repos, emailSender)
 	handlers := handler.NewHandler(services)
 

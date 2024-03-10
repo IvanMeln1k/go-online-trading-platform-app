@@ -7,6 +7,12 @@ db:
   name: "postgres"
   sslmode: "disable"
 
+rdb:
+  host: "localhost"
+  port: "6378"
+  password: "redis"
+  db: "0"
+
 smtp:
   email: "IvanMelnikovF@gmail.com"
   host: "smtp.gmail.com"

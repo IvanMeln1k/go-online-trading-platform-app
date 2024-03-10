@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/domain"
+	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -23,7 +24,7 @@ type Repository struct {
 	Users
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
+func NewRepository(db *sqlx.DB, rdb *redis.Client) *Repository {
 	return &Repository{
 		Users: NewUsersRepository(db),
 	}
