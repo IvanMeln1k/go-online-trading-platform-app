@@ -21,11 +21,6 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 	}
 }
 
-var (
-	ErrUserNotFound = errors.New("error user not found")
-	ErrInternal     = errors.New("internal error")
-)
-
 func (r *UsersRepository) Create(ctx context.Context, user domain.User) (int, error) {
 	var id int
 

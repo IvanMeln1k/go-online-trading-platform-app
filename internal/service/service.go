@@ -18,7 +18,7 @@ type Service struct {
 
 func NewService(repo *repository.Repository, emailSender email.EmailSender) *Service {
 	return &Service{
-		Users: NewUsersService(repo),
+		Users: NewUsersService(repo.Users),
 		Auth:  NewAuthService(),
 	}
 }
