@@ -200,9 +200,29 @@ func (r *SessionsRepository) GetAll(ctx context.Context, userId int) ([]domain.S
 func (r *SessionsRepository) DeleteAll(ctx context.Context, userId int) error {
 	pipe := r.rdb.Pipeline()
 
+	userSessionsKey := r.getUserSessionsKey(userId)
+
 	sessions, err := r.GetAll(ctx, userId)
 	if err != nil {
 		logrus.Errorf("error get user sessions: %s", err)
+	}
+
+	_, err = pipe.Del(userSessionsKey).Result()
+	if err != nil {
+		logrus.Errorf("error del user sessions: %s", err)
+		pipe.Discard()
+		return ErrInternal
+	}
+
+	sessionsKeys := make([]string, len(sessions))
+	for i := 0; i < len(sessions); i++ {
+		sessionsKeys[i] = r.getSessionKey(sessions[i].RefreshToken)
+	}
+	_, err = pipe.Del(sessionsKeys...).Result()
+	if err != nil {
+		logrus.Errorf("error del sessions: %s", err)
+		pipe.Discard()
+		return ErrInternal
 	}
 
 	return nil
