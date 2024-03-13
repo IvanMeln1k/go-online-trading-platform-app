@@ -1,16 +1,19 @@
 port: "8000"
 
+app:
+  host: "app"
+  port: "8000"
+
 db:
-  host: "localhost"
-  port: "5678"
+  host: "postgresdb"
+  port: "5432"
   user: "postgres"
   name: "postgres"
   sslmode: "disable"
 
 rdb:
-  host: "localhost"
-  port: "6378"
-  password: "redis"
+  host: "redisdb"
+  port: "6379"
   db: "0"
 
 smtp:

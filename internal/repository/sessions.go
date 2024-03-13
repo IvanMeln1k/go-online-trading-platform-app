@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/IvanMeln1k/go-online-trading-platform-app/domain"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 )
@@ -22,10 +22,12 @@ func NewSessionsRepository(rdb *redis.Client) *SessionsRepository {
 	}
 }
 
+// Returns the session key in redis by refreshToken
 func (r *SessionsRepository) getSessionKey(refreshToken string) string {
 	return fmt.Sprintf("sessions:%s", refreshToken)
 }
 
+// Returns key of the user's sessions list
 func (r *SessionsRepository) getUserSessionsKey(userId int) string {
 	return fmt.Sprintf("userSessions:%d", userId)
 }
@@ -136,7 +138,7 @@ func (r *SessionsRepository) Delete(ctx context.Context, userId int, refreshToke
 
 	_, err = pipe.Exec()
 	if err != nil {
-		logrus.Errorf("error exec transaction redis: %w", err)
+		logrus.Errorf("error exec transaction redis: %s", err)
 		return ErrInternal
 	}
 

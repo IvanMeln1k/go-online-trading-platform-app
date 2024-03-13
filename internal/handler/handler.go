@@ -24,5 +24,9 @@ func (h *Handler) InitRoutes() *echo.Echo {
 		Validator: validator.New(),
 	}
 
+	router.GET("/", func(c echo.Context) error {
+		return c.String(200, "hello")
+	})
+
 	return router
 }

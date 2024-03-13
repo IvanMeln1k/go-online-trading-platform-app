@@ -44,7 +44,7 @@ func main() {
 	rdb := database.NewRedisDB(database.RedisConfig{
 		Host:     viper.GetString("rdb.host"),
 		Port:     viper.GetString("rdb.port"),
-		Password: viper.GetString("rdb.password"),
+		Password: os.Getenv("REDIS_PASS"),
 		DB:       rdbNum,
 	})
 
@@ -60,8 +60,8 @@ func main() {
 
 	srv := new(server.Server)
 	srvCfg := server.ServerConfig{
-		Host: "localhost",
-		Port: "8000",
+		Host: viper.GetString("app.host"),
+		Port: viper.GetString("app.port"),
 	}
 	if err := srv.Run(srvCfg, handlers.InitRoutes()); err != nil {
 		logrus.Fatalf("error occured while running http server: %s", err.Error())

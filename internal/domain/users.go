@@ -10,9 +10,9 @@ var (
 
 type User struct {
 	Id       int    `json:"id"`
-	Email    string `json:"email"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
+	Email    string `json:"email"`
 	Password string `json:"password" db:"hash_password"`
 }
 

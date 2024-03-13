@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IvanMeln1k/go-online-trading-platform-app/domain"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 )
 
 type UsersRepository struct {
@@ -24,10 +25,11 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 func (r *UsersRepository) Create(ctx context.Context, user domain.User) (int, error) {
 	var id int
 
-	query := fmt.Sprintf(`INSERT INTO %s (email, username, name, hash_password)
+	query := fmt.Sprintf(`INSERT INTO %s (username, name, email, hash_password)
 	VALUES ($1, $2, $3, $4) RETURNING id`, usersTable)
-	res := r.db.QueryRow(query, user.Email, user.Username, user.Name, user.Password)
-	if err := res.Scan(&id); err != nil {
+	row := r.db.QueryRow(query, user.Username, user.Name, user.Email, user.Password)
+	if err := row.Scan(&id); err != nil {
+		logrus.Errorf("error create user into db: %s", err)
 		return 0, ErrInternal
 	}
 
@@ -41,6 +43,7 @@ func (r *UsersRepository) get(ctx context.Context, key string,
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s = $1`, usersTable, key)
 	err := r.db.Get(&user, query, value)
 	if err != nil {
+		logrus.Errorf("error get user from db: %s", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrUserNotFound
 		}
@@ -75,17 +78,17 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 		argId++
 	}
 
-	if data.Email != nil {
-		addProp("email", *data.Email)
+	if data.Username != nil {
+		addProp("username", *data.Username)
 	}
 	if data.Name != nil {
 		addProp("name", *data.Email)
 	}
+	if data.Email != nil {
+		addProp("email", *data.Email)
+	}
 	if data.Password != nil {
 		addProp("password", *data.Password)
-	}
-	if data.Username != nil {
-		addProp("username", *data.Username)
 	}
 
 	setQuery := strings.Join(names, ", ")
@@ -94,6 +97,7 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 		usersTable, setQuery, argId+1)
 	err := r.db.Get(&user, query, values...)
 	if err != nil {
+		logrus.Errorf("error update user: %s", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrUserNotFound
 		}
