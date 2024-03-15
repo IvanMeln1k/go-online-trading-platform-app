@@ -12,6 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	ErrSessionExpiredOrInvalid = errors.New("error session expired or invalid")
+)
+
 type SessionsRepository struct {
 	rdb *redis.Client
 }

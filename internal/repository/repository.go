@@ -14,9 +14,7 @@ const (
 )
 
 var (
-	ErrUserNotFound            = errors.New("error user not found")
-	ErrInternal                = errors.New("internal error")
-	ErrSessionExpiredOrInvalid = errors.New("error session expired or invalid")
+	ErrInternal = errors.New("internal error")
 )
 
 type Users interface {

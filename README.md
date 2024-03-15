@@ -33,4 +33,4 @@
 
 4. Подключиться к контейнеру:
 
-```docker exec -it <id> /bin/bash```
+```docker exec -it <id> /bin/sh```

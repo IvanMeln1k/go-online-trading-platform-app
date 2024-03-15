@@ -12,6 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var (
+	ErrUserNotFound = errors.New("error user not found")
+)
+
 type UsersRepository struct {
 	db *sqlx.DB
 }
@@ -40,7 +44,7 @@ func (r *UsersRepository) get(ctx context.Context, key string,
 	value interface{}) (domain.User, error) {
 	var user domain.User
 
-	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s = $1`, usersTable, key)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s=$1`, usersTable, key)
 	err := r.db.Get(&user, query, value)
 	if err != nil {
 		logrus.Errorf("error get user from db: %s", err)
@@ -82,7 +86,7 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 		addProp("username", *data.Username)
 	}
 	if data.Name != nil {
-		addProp("name", *data.Email)
+		addProp("name", *data.Name)
 	}
 	if data.Email != nil {
 		addProp("email", *data.Email)
@@ -93,7 +97,7 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 
 	setQuery := strings.Join(names, ", ")
 	values = append(values, id)
-	query := fmt.Sprintf(`UPDATE %s u SET %s WHERE id = $%d RETURNING u.*`,
+	query := fmt.Sprintf(`UPDATE %s u SET %s WHERE id=$%d RETURNING u.*`,
 		usersTable, setQuery, argId+1)
 	err := r.db.Get(&user, query, values...)
 	if err != nil {
