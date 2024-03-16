@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,12 +37,12 @@ func (r *SessionsRepository) getUserSessionsKey(userId int) string {
 }
 
 func (r *SessionsRepository) Create(ctx context.Context, session domain.Session) error {
-	pipe := r.rdb.Pipeline()
+	pipe := r.rdb.TxPipeline()
 
 	sessionKey := r.getSessionKey(session.RefreshToken)
 	userSessionsKey := r.getUserSessionsKey(session.UserId)
 
-	_, err := pipe.ZAdd(userSessionsKey, redis.Z{
+	_, err := pipe.ZAdd(ctx, userSessionsKey, redis.Z{
 		Score:  0,
 		Member: session.RefreshToken,
 	}).Result()
@@ -52,21 +52,21 @@ func (r *SessionsRepository) Create(ctx context.Context, session domain.Session)
 		return ErrInternal
 	}
 
-	_, err = pipe.HSet(sessionKey, "id", session.UserId).Result()
+	_, err = pipe.HSet(ctx, sessionKey, "userId", session.UserId).Result()
 	if err != nil {
 		logrus.Errorf("error create session into redis: %s", err)
 		pipe.Discard()
 		return ErrInternal
 	}
 
-	_, err = pipe.ExpireAt(sessionKey, session.ExpiresAt).Result()
+	_, err = pipe.ExpireAt(ctx, sessionKey, session.ExpiresAt).Result()
 	if err != nil {
 		logrus.Errorf("error set expiresat session: %s", err)
 		pipe.Discard()
 		return ErrInternal
 	}
 
-	_, err = pipe.Exec()
+	_, err = pipe.Exec(ctx)
 	if err != nil {
 		logrus.Errorf("error exec transactoin: %s", err)
 		pipe.Discard()
@@ -79,7 +79,7 @@ func (r *SessionsRepository) Create(ctx context.Context, session domain.Session)
 func (r *SessionsRepository) bindSession(session *domain.Session, sessionMap map[string]string) error {
 	val, ok := sessionMap["userId"]
 	if !ok {
-		return errors.New("sessionMap hasn't userId")
+		return errors.New("sessionMap hasn't UserId")
 	}
 	userId, err := strconv.Atoi(val)
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *SessionsRepository) Get(ctx context.Context, refreshToken string) (doma
 
 	sessionKey := r.getSessionKey(refreshToken)
 
-	res, err := r.rdb.HGetAll(sessionKey).Result()
+	res, err := r.rdb.HGetAll(ctx, sessionKey).Result()
 	if err != nil {
 		logrus.Errorf("")
 		return session, ErrInternal
@@ -108,10 +108,10 @@ func (r *SessionsRepository) Get(ctx context.Context, refreshToken string) (doma
 		return session, ErrSessionExpiredOrInvalid
 	}
 
-	ttl, err := r.rdb.TTL(refreshToken).Result()
+	ttl, err := r.rdb.TTL(ctx, sessionKey).Result()
 	if err != nil {
 		logrus.Errorf("error get ttl session: %s", err)
-		return session, ErrSessionExpiredOrInvalid
+		return session, ErrInternal
 	}
 
 	session.ExpiresAt = time.Now().UTC().Add(ttl)
@@ -121,26 +121,26 @@ func (r *SessionsRepository) Get(ctx context.Context, refreshToken string) (doma
 }
 
 func (r *SessionsRepository) Delete(ctx context.Context, userId int, refreshToken string) error {
-	pipe := r.rdb.Pipeline()
+	pipe := r.rdb.TxPipeline()
 
 	userSessionsKey := r.getUserSessionsKey(userId)
 	sessionKey := r.getSessionKey(refreshToken)
 
-	_, err := pipe.ZRem(userSessionsKey, sessionKey).Result()
+	_, err := pipe.ZRem(ctx, userSessionsKey, refreshToken).Result()
 	if err != nil {
 		pipe.Discard()
 		logrus.Errorf("error del session from userSessions: %s", err)
 		return ErrInternal
 	}
 
-	_, err = pipe.Del(userSessionsKey).Result()
+	_, err = pipe.Del(ctx, sessionKey).Result()
 	if err != nil {
 		pipe.Discard()
 		logrus.Errorf("error del session: %s", err)
 		return ErrInternal
 	}
 
-	_, err = pipe.Exec()
+	_, err = pipe.Exec(ctx)
 	if err != nil {
 		logrus.Errorf("error exec transaction redis: %s", err)
 		return ErrInternal
@@ -150,17 +150,15 @@ func (r *SessionsRepository) Delete(ctx context.Context, userId int, refreshToke
 }
 
 func (r *SessionsRepository) GetCnt(ctx context.Context, userId int) (int, error) {
-	var cnt int
-
 	userSessionsKey := r.getUserSessionsKey(userId)
 
-	_, err := r.rdb.ZCard(userSessionsKey).Result()
+	cnt, err := r.rdb.ZCard(ctx, userSessionsKey).Result()
 	if err != nil {
 		logrus.Errorf("error get zcard user sessions: %s", err)
-		return cnt, ErrInternal
+		return 0, ErrInternal
 	}
 
-	return cnt, nil
+	return int(cnt), nil
 }
 
 func (r *SessionsRepository) GetAll(ctx context.Context, userId int) ([]domain.Session, error) {
@@ -173,7 +171,7 @@ func (r *SessionsRepository) GetAll(ctx context.Context, userId int) ([]domain.S
 
 	userSessionsKey := r.getUserSessionsKey(userId)
 
-	refreshTokens, err := r.rdb.ZRange(userSessionsKey, 0, int64(cnt)).Result()
+	refreshTokens, err := r.rdb.ZRange(ctx, userSessionsKey, 0, int64(cnt)).Result()
 	if err != nil {
 		logrus.Errorf("error get refresh tokens by id from redis: %s", err)
 		return nil, ErrInternal
@@ -187,14 +185,14 @@ func (r *SessionsRepository) GetAll(ctx context.Context, userId int) ([]domain.S
 		session, err := r.Get(ctx, refreshTokens[i])
 		if err != nil {
 			if errors.Is(err, ErrSessionExpiredOrInvalid) {
-				_, err := r.rdb.Del(sessionKeys[i]).Result()
+				_, err := r.rdb.Del(ctx, sessionKeys[i]).Result()
 				if err != nil {
-					logrus.Errorf("error delete invalid session: %s", err)
+					logrus.Errorf("error delete invalid session when getting all sessions: %s", err)
 					return nil, ErrInternal
 				}
 				continue
 			}
-			logrus.Errorf("error get session by token: %s", err)
+			logrus.Errorf("error get session by token when getting all sessions: %s", err)
 			return nil, ErrInternal
 		}
 		sessions = append(sessions, session)
@@ -204,29 +202,42 @@ func (r *SessionsRepository) GetAll(ctx context.Context, userId int) ([]domain.S
 }
 
 func (r *SessionsRepository) DeleteAll(ctx context.Context, userId int) error {
-	pipe := r.rdb.Pipeline()
+	pipe := r.rdb.TxPipeline()
 
 	userSessionsKey := r.getUserSessionsKey(userId)
 
-	sessions, err := r.GetAll(ctx, userId)
+	cnt, err := r.rdb.ZCard(ctx, userSessionsKey).Result()
+	if err != nil {
+		logrus.Errorf("error get cnt user sessions when delete all: %s", err)
+		return ErrInternal
+	}
+	refreshTokens, err := r.rdb.ZRange(ctx, userSessionsKey, 0, int64(cnt)).Result()
 	if err != nil {
 		logrus.Errorf("error get user sessions: %s", err)
+		return ErrInternal
 	}
 
-	_, err = pipe.Del(userSessionsKey).Result()
+	_, err = pipe.Del(ctx, userSessionsKey).Result()
 	if err != nil {
 		logrus.Errorf("error del user sessions: %s", err)
 		pipe.Discard()
 		return ErrInternal
 	}
 
-	sessionsKeys := make([]string, len(sessions))
-	for i := 0; i < len(sessions); i++ {
-		sessionsKeys[i] = r.getSessionKey(sessions[i].RefreshToken)
+	sessionsKeys := make([]string, len(refreshTokens))
+	for i := 0; i < len(refreshTokens); i++ {
+		sessionsKeys[i] = r.getSessionKey(refreshTokens[i])
 	}
-	_, err = pipe.Del(sessionsKeys...).Result()
+	_, err = pipe.Del(ctx, sessionsKeys...).Result()
 	if err != nil {
-		logrus.Errorf("error del sessions: %s", err)
+		logrus.Errorf("error del sessions when delete all sessions: %s", err)
+		pipe.Discard()
+		return ErrInternal
+	}
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		logrus.Errorf("error exec session when delete all: %s", err)
 		pipe.Discard()
 		return ErrInternal
 	}

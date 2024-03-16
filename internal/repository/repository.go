@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
-	"github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
