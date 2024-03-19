@@ -28,16 +28,23 @@ var (
 	ErrInvalidEmail = errors.New("email is invalid")
 )
 
-func NewEmailSender(email, pass, host, port string) (*SMTPSender, error) {
-	if err := validateEmail(email); err != nil {
+type EmailSenderConfig struct {
+	Email string
+	Pass  string
+	Host  string
+	Port  string
+}
+
+func NewEmailSender(cfg EmailSenderConfig) (*SMTPSender, error) {
+	if err := validateEmail(cfg.Email); err != nil {
 		return nil, ErrInvalidEmail
 	}
-	auth := smtp.PlainAuth("", email, pass, host)
+	auth := smtp.PlainAuth("", cfg.Email, cfg.Pass, cfg.Host)
 	return &SMTPSender{
-		Email: email,
-		Pass:  pass,
-		Host:  host,
-		Port:  port,
+		Email: cfg.Email,
+		Pass:  cfg.Pass,
+		Host:  cfg.Host,
+		Port:  cfg.Port,
 		auth:  auth,
 	}, nil
 }

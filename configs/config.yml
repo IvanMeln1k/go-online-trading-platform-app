@@ -23,4 +23,5 @@ smtp:
 
 tokens:
   refreshTTL: "60d"
+  accessTTL: "15m"
   emailTTL: "1h"

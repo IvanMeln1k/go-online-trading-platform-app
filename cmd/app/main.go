@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/handler"
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository"
@@ -10,6 +11,8 @@ import (
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/service"
 	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/database"
 	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/email"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/password"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/tokens"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -48,14 +51,34 @@ func main() {
 		DB:       rdbNum,
 	})
 
-	emailSender, err := email.NewEmailSender("IvanMelnikovF@gmail.com", os.Getenv("SMTP_PASS"),
-		viper.GetString("smtp.host"), viper.GetString("smtp.port"))
+	emailSender, err := email.NewEmailSender(email.EmailSenderConfig{
+		Email: viper.GetString("smtp.email"),
+		Pass:  os.Getenv("SMTP_PASS"),
+		Host:  viper.GetString("smtp.host"),
+		Port:  viper.GetString("smtp.port"),
+	})
 	if err != nil {
-		logrus.Fatalf("error create email sender: %s", err)
+		logrus.Fatalf("error creating email sender: %s", err)
 	}
+	accessTTL, err := time.ParseDuration(viper.GetString("tokens.accessTTL"))
+	if err != nil {
+		logrus.Fatalf("error parsing accessTTL: %s", err)
+	}
+	refreshTTL, err := time.ParseDuration(viper.GetString("tokens.refreshTTL"))
+	if err != nil {
+		logrus.Fatalf("error parsing refreshTTL: %s", err)
+	}
+	tokenManager := tokens.NewTokenManager(os.Getenv("JWT_KEY"), accessTTL)
+	passwordManager := password.NewPasswordManager(os.Getenv("SALT"))
 
 	repos := repository.NewRepository(db, rdb)
-	services := service.NewService(repos, emailSender)
+	services := service.NewService(service.Deps{
+		Repo:            repos,
+		TokenManager:    tokenManager,
+		PasswordManager: passwordManager,
+		EmailSender:     emailSender,
+		RefreshTTL:      refreshTTL,
+	})
 	handlers := handler.NewHandler(services)
 
 	srv := new(server.Server)
