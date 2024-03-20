@@ -69,16 +69,6 @@ func (r *UsersRepository) GetByUserName(ctx context.Context, username string) (d
 	return r.get(ctx, "username", username)
 }
 
-func (r *UsersRepository) VerifyEmail(ctx context.Context, id int) error {
-	query := fmt.Sprintf(`UPDATE %s SET email_verified=true WHERE id=$1`, usersTable)
-	_, err := r.db.Query(query, id)
-	if err != nil {
-		logrus.Errorf("error update email_verified: %s", err)
-		return ErrInternal
-	}
-	return nil
-}
-
 func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUpdate) (domain.User, error) {
 	var user domain.User
 
@@ -103,6 +93,9 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 	}
 	if data.Password != nil {
 		addProp("password", *data.Password)
+	}
+	if data.EmailVefiried != nil {
+		addProp("email_verified", *data.EmailVefiried)
 	}
 
 	setQuery := strings.Join(names, ", ")

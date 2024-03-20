@@ -28,7 +28,6 @@ type Users interface {
 	GetByUserName(ctx context.Context, username string) (domain.User, error)
 	// Updates the user by id
 	Update(ctx context.Context, id int, data domain.UserUpdate) (domain.User, error)
-	VerifyEmail(ctx context.Context, id int) error
 }
 
 type Sessions interface {

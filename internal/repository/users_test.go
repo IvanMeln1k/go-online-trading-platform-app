@@ -355,26 +355,30 @@ func TestUsersPostgres_Update(t *testing.T) {
 			args: args{
 				id: 1,
 				user: domain.UserUpdate{
-					Username: stringPointer("username"),
-					Name:     stringPointer("name"),
-					Email:    stringPointer("email"),
-					Password: stringPointer("password"),
+					Username:      stringPointer("username"),
+					Name:          stringPointer("name"),
+					Email:         stringPointer("email"),
+					Password:      stringPointer("password"),
+					EmailVefiried: boolPointer(true),
 				},
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password)
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password",
+					"email_verified"}).
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password,
+						user.EmailVerified)
 				mock.ExpectQuery("UPDATE users u SET (.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Username, *args.user.Name, *args.user.Email,
-						*args.user.Password, args.id).
+						*args.user.Password, *args.user.EmailVefiried, args.id).
 					WillReturnRows(rows)
 			},
 			want: domain.User{
-				Id:       1,
-				Username: "username",
-				Name:     "name",
-				Email:    "email",
-				Password: "password",
+				Id:            1,
+				Username:      "username",
+				Name:          "name",
+				Email:         "email",
+				Password:      "password",
+				EmailVerified: true,
 			},
 			wantErr: nil,
 		},
@@ -386,17 +390,20 @@ func TestUsersPostgres_Update(t *testing.T) {
 				},
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password)
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password",
+					"email_verified"}).
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password,
+						user.EmailVerified)
 				mock.ExpectQuery("UPDATE users u SET email = (.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Email, args.id).WillReturnRows(rows)
 			},
 			want: domain.User{
-				Id:       1,
-				Username: "username",
-				Name:     "name",
-				Email:    "email",
-				Password: "password",
+				Id:            1,
+				Username:      "username",
+				Name:          "name",
+				Email:         "email",
+				Password:      "password",
+				EmailVerified: true,
 			},
 			wantErr: nil,
 		},
@@ -449,4 +456,8 @@ func TestUsersPostgres_Update(t *testing.T) {
 
 func stringPointer(s string) *string {
 	return &s
+}
+
+func boolPointer(b bool) *bool {
+	return &b
 }

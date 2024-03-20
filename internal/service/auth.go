@@ -94,7 +94,11 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email string) error {
 	if user.EmailVerified {
 		return ErrInternal
 	}
-	err = s.usersRepo.VerifyEmail(ctx, user.Id)
+	var emailVefiried bool
+	emailVefiried = true
+	_, err = s.usersRepo.Update(ctx, user.Id, domain.UserUpdate{
+		EmailVefiried: &emailVefiried,
+	})
 	if err != nil {
 		return ErrInternal
 	}
