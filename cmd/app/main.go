@@ -64,11 +64,15 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("error parsing accessTTL: %s", err)
 	}
+	emailTTL, err := time.ParseDuration(viper.GetString("tokens.emailTTL"))
+	if err != nil {
+		logrus.Fatalf("error parsing emailTTL: %s", err)
+	}
 	refreshTTL, err := time.ParseDuration(viper.GetString("tokens.refreshTTL"))
 	if err != nil {
 		logrus.Fatalf("error parsing refreshTTL: %s", err)
 	}
-	tokenManager := tokens.NewTokenManager(os.Getenv("JWT_KEY"), accessTTL)
+	tokenManager := tokens.NewTokenManager(os.Getenv("JWT_KEY"), accessTTL, emailTTL)
 	passwordManager := password.NewPasswordManager(os.Getenv("SALT"))
 
 	repos := repository.NewRepository(db, rdb)
@@ -79,7 +83,10 @@ func main() {
 		EmailSender:     emailSender,
 		RefreshTTL:      refreshTTL,
 	})
-	handlers := handler.NewHandler(services)
+	handlers := handler.NewHandler(handler.Deps{
+		Services:     services,
+		TokenManager: tokenManager,
+	})
 
 	srv := new(server.Server)
 	srvCfg := server.ServerConfig{

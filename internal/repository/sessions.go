@@ -98,7 +98,7 @@ func (r *SessionsRepository) Get(ctx context.Context, refreshToken string) (doma
 
 	res, err := r.rdb.HGetAll(ctx, sessionKey).Result()
 	if err != nil {
-		logrus.Errorf("")
+		logrus.Errorf("error get session from redis: %s", err)
 		return session, ErrInternal
 	}
 

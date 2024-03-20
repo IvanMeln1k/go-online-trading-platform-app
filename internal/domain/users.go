@@ -9,11 +9,12 @@ var (
 )
 
 type User struct {
-	Id       int    `json:"id"`
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password" db:"hash_password"`
+	Id            int    `json:"id"`
+	Username      string `json:"username" validate:"required"`
+	Name          string `json:"name" validate:"required"`
+	Email         string `json:"email" validate:"required,email"`
+	Password      string `json:"password" db:"hash_password" validate:"required"`
+	EmailVerified bool   `json:"emailVerified" db:"email_verified"`
 }
 
 type UserUpdate struct {

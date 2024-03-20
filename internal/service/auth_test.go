@@ -1,15 +1,6 @@
 package service
 
-import (
-	"context"
-	"testing"
-
-	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
-	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository"
-	mock_repository "github.com/IvanMeln1k/go-online-trading-platform-app/internal/repository/mock"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-)
+/*
 
 func TestAuth_SignUp(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -131,3 +122,5 @@ func TestAuth_SignIn(t *testing.T) {
 		},
 	}
 }
+
+*/

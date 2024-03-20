@@ -22,6 +22,6 @@ smtp:
   port: "587"
 
 tokens:
-  refreshTTL: "60d"
+  refreshTTL: "1440h"
   accessTTL: "15m"
   emailTTL: "1h"

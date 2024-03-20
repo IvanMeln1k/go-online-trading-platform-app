@@ -19,8 +19,10 @@ var (
 type Auth interface {
 	SignUp(ctx context.Context, user domain.User) (int, error)
 	SignIn(ctx context.Context, email string, password string) (domain.Tokens, error)
-	// Logout(ctx context.Context, refreshToken string) error
-	// LogoutAll(ctx context.Context, refreshToken string) error
+	VerifyEmail(ctx context.Context, email string) error
+	Logout(ctx context.Context, refreshToken string) error
+	LogoutAll(ctx context.Context, refreshToken string) error
+	Refresh(ctx context.Context, refreshToken string) (domain.Tokens, error)
 }
 
 type Service struct {
