@@ -77,11 +77,12 @@ func main() {
 
 	repos := repository.NewRepository(db, rdb)
 	services := service.NewService(service.Deps{
-		Repo:            repos,
-		TokenManager:    tokenManager,
-		PasswordManager: passwordManager,
-		EmailSender:     emailSender,
-		RefreshTTL:      refreshTTL,
+		Repo:                  repos,
+		TokenManager:          tokenManager,
+		PasswordManager:       passwordManager,
+		EmailSender:           emailSender,
+		RefreshTTL:            refreshTTL,
+		VerificationEmailAddr: viper.GetString("verification.link"),
 	})
 	handlers := handler.NewHandler(handler.Deps{
 		Services:     services,

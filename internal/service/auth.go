@@ -24,24 +24,26 @@ var (
 )
 
 type AuthService struct {
-	usersRepo       repository.Users
-	sessionsRepo    repository.Sessions
-	tokenManager    tokens.TokenManagerI
-	passwordManager password.PasswordManagerI
-	emailSender     email.EmailSender
-	refreshTTL      time.Duration
+	usersRepo        repository.Users
+	sessionsRepo     repository.Sessions
+	tokenManager     tokens.TokenManagerI
+	passwordManager  password.PasswordManagerI
+	emailSender      email.EmailSender
+	refreshTTL       time.Duration
+	verificationAddr string
 }
 
 func NewAuthService(usersRepo repository.Users, sessionsRepo repository.Sessions,
 	tokenManager tokens.TokenManagerI, passwordManager password.PasswordManagerI,
-	emailSender email.EmailSender, refreshTTL time.Duration) *AuthService {
+	emailSender email.EmailSender, refreshTTL time.Duration, verificationAddr string) *AuthService {
 	return &AuthService{
-		usersRepo:       usersRepo,
-		sessionsRepo:    sessionsRepo,
-		tokenManager:    tokenManager,
-		passwordManager: passwordManager,
-		emailSender:     emailSender,
-		refreshTTL:      refreshTTL,
+		usersRepo:        usersRepo,
+		sessionsRepo:     sessionsRepo,
+		tokenManager:     tokenManager,
+		passwordManager:  passwordManager,
+		emailSender:      emailSender,
+		refreshTTL:       refreshTTL,
+		verificationAddr: verificationAddr,
 	}
 }
 
@@ -74,7 +76,7 @@ func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error)
 	}
 	err = s.emailSender.Send("templates/verification.html", user.Email,
 		"GO Online-Trading-Platform verification email", map[string]string{
-			"Link": fmt.Sprintf("localhost:8000/auth/verify?email=%s", emailToken),
+			"Link": fmt.Sprintf("%s?email=%s", s.verificationAddr, emailToken),
 		})
 	if err != nil {
 		return 0, ErrSendEmailVerification

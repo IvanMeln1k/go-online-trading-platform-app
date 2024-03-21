@@ -30,16 +30,17 @@ type Service struct {
 }
 
 type Deps struct {
-	Repo            *repository.Repository
-	TokenManager    tokens.TokenManagerI
-	PasswordManager password.PasswordManagerI
-	EmailSender     email.EmailSender
-	RefreshTTL      time.Duration
+	Repo                  *repository.Repository
+	TokenManager          tokens.TokenManagerI
+	PasswordManager       password.PasswordManagerI
+	EmailSender           email.EmailSender
+	RefreshTTL            time.Duration
+	VerificationEmailAddr string
 }
 
 func NewService(deps Deps) *Service {
 	return &Service{
 		Auth: NewAuthService(deps.Repo.Users, deps.Repo.Sessions, deps.TokenManager,
-			deps.PasswordManager, deps.EmailSender, deps.RefreshTTL),
+			deps.PasswordManager, deps.EmailSender, deps.RefreshTTL, deps.VerificationEmailAddr),
 	}
 }

@@ -77,6 +77,10 @@ func TestAuth_SignUp(t *testing.T) {
 	}
 }
 
+*/
+
+/*
+
 func TestAuth_SignIn(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
