@@ -1,0 +1,30 @@
+port: "8000"
+
+app:
+  host: "app"
+  port: "8000"
+
+db:
+  host: "postgresdb"
+  port: "5432"
+  user: "postgres"
+  name: "postgres"
+  sslmode: "disable"
+
+rdb:
+  host: "redisdb"
+  port: "6379"
+  db: "0"
+
+smtp:
+  email: "IvanMelnikovF@gmail.com"
+  host: "smtp.gmail.com"
+  port: "587"
+
+tokens:
+  refreshTTL: "1440h"
+  accessTTL: "15m"
+  emailTTL: "1h"
+
+verification:
+  link: "http://localhost:8000/auth/verification"
