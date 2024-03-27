@@ -25,16 +25,16 @@ type Auth interface {
 	Refresh(ctx context.Context, refreshToken string) (domain.Tokens, error)
 }
 
-type Users interface {
-	GetAllCards(ctx context.Context, userId int) ([]domain.CardReturn, error)
-	GetCard(ctx context.Context, userId int, cardId int) (domain.Card, error)
-	AddCard(ctx context.Context, userId int, card domain.Card) (int, error)
-	DeleteCard(ctx context.Context, userId int, cardId int) error
+type Cards interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Card, error)
+	Get(ctx context.Context, userId int, cardId int) (domain.Card, error)
+	Create(ctx context.Context, userId int, card domain.Card) (int, error)
+	Delete(ctx context.Context, userId int, cardId int) error
 }
 
 type Service struct {
 	Auth
-	Users
+	Cards
 }
 
 type Deps struct {

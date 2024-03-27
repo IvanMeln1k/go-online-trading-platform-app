@@ -3,6 +3,6 @@ CREATE TABLE cards (
     number VARCHAR(16) NOT NULL,
     data VARCHAR(5) NOT NULL,
     cvv VARCHAR(3) NOT NULL,
-    users_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
     FOREIGN KEY(users_id) REFERENCES users (id)
 )
