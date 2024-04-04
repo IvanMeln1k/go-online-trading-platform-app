@@ -6,6 +6,7 @@ import (
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/service"
+	"github.com/IvanMeln1k/go-online-trading-platform-app/pkg/tokens"
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 )
@@ -143,4 +144,59 @@ func (h *Handler) logoutAll(c echo.Context) error {
 	return c.JSON(200, LogoutReturn{
 		Status: "ok",
 	})
+}
+
+type VerifyEmailReturn struct {
+	status string
+}
+
+func (h *Handler) verifyEmail(c echo.Context) error {
+	emailToken := c.Param("email")
+
+	if emailToken == "" {
+		return newErrorResponse(401, "No authorized")
+	}
+	email, err := h.tokenManager.ParseEmailToken(emailToken)
+	if err != nil {
+		if errors.Is(tokens.ErrTokenExpired, err) {
+			return newErrorResponse(401, "Token is expired")
+		}
+		if errors.Is(tokens.ErrTokenInvalid, err) {
+			return newErrorResponse(401, "Token is invalid")
+		}
+		return newErrorResponse(500, "Internal server error")
+	}
+	err = h.services.Auth.VerifyEmail(c.Request().Context(), email)
+	if err != nil {
+		if errors.Is(service.ErrUserNotFound, err) {
+			return newErrorResponse(401, "User not found")
+		}
+		return newErrorResponse(500, "Internal server error")
+	}
+	return c.JSON(200, VerifyEmailReturn{status: "ok"})
+}
+
+type ResendEmailReturn struct {
+	status string
+}
+
+func (h *Handler) resendEmail(c echo.Context) error {
+	var user domain.User
+
+	if err := c.Bind(&user); err != nil {
+		logrus.Errorf("error bind user: %s", err)
+		return newErrorResponse(400, "Bad request")
+	}
+	if err := c.Validate(user); err != nil {
+		logrus.Errorf("error validate user: %s", err)
+		return newErrorResponse(400, err.Error())
+	}
+	err := h.services.Auth.ResendEmail(c.Request().Context(), user)
+	if err != nil {
+		if errors.Is(service.ErrSendEmailVerification, err) {
+			return newErrorResponse(500, "Internal verification error")
+		}
+		return newErrorResponse(500, "Internal server error")
+	}
+	return c.JSON(200, ResendEmailReturn{status: "ok"})
 }

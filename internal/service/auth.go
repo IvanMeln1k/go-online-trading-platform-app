@@ -85,6 +85,22 @@ func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error)
 	return id, nil
 }
 
+func (s *AuthService) ResendEmail(ctx context.Context, user domain.User) error {
+	emailToken, err := s.tokenManager.CreateEmailToken(user.Email)
+	if err != nil {
+		return ErrSendEmailVerification
+	}
+	err = s.emailSender.Send("templates/verification.html", user.Email,
+		"GO Online-Trading-Platform verification email", map[string]string{
+			"Link": fmt.Sprintf("%s?email=%s", s.verificationAddr, emailToken),
+		})
+	if err != nil {
+		return ErrSendEmailVerification
+	}
+
+	return nil
+}
+
 func (s *AuthService) VerifyEmail(ctx context.Context, email string) error {
 	user, err := s.usersRepo.GetByEmail(ctx, email)
 	if err != nil {

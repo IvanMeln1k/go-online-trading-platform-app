@@ -23,6 +23,7 @@ type Auth interface {
 	Logout(ctx context.Context, refreshToken string) error
 	LogoutAll(ctx context.Context, refreshToken string) error
 	Refresh(ctx context.Context, refreshToken string) (domain.Tokens, error)
+	ResendEmail(ctx context.Context, user domain.User) error
 }
 
 type Service struct {
