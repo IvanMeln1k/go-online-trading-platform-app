@@ -18,13 +18,13 @@ func (h *Handler) userIdentity(next echo.HandlerFunc) echo.HandlerFunc {
 			return newErrorResponse(401, "Not authorized")
 		}
 
-		params := strings.Split(header, "")
+		params := strings.Split(header, " ")
 		if len(params) < 2 {
 			logrus.Errorf("invalid header auth: len(params) < 2")
 			return newErrorResponse(401, "Not authorized")
 		}
 		if params[0] != "Bearer" {
-			logrus.Errorf("invalid header auth: no bearer")
+			logrus.Errorf("invalid header auth: no bearer, but header: %s", header)
 			return newErrorResponse(401, "Not authorized")
 		}
 

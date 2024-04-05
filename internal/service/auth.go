@@ -89,7 +89,7 @@ func (s *AuthService) ResendEmail(ctx context.Context, id int) error {
 	user, err := s.usersRepo.GetById(ctx, id)
 	if err != nil {
 		logrus.Errorf("Error get user from repositiry when resend email: %s", err)
-		if errors.Is(repository.ErrUserNotFound, err){
+		if errors.Is(repository.ErrUserNotFound, err) {
 			return ErrUserNotFound
 		}
 		return ErrInternal
@@ -112,6 +112,7 @@ func (s *AuthService) ResendEmail(ctx context.Context, id int) error {
 func (s *AuthService) VerifyEmail(ctx context.Context, email string) error {
 	user, err := s.usersRepo.GetByEmail(ctx, email)
 	if err != nil {
+		logrus.Errorf("error get user from repo when verify email (email: %s): %s", email, err)
 		if errors.Is(repository.ErrUserNotFound, err) {
 			return ErrUserNotFound
 		}

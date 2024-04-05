@@ -101,9 +101,10 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 	setQuery := strings.Join(names, ", ")
 	values = append(values, id)
 	query := fmt.Sprintf(`UPDATE %s u SET %s WHERE id=$%d RETURNING u.*`,
-		usersTable, setQuery, argId+1)
+		usersTable, setQuery, argId)
 	err := r.db.Get(&user, query, values...)
 	if err != nil {
+		logrus.Errorf("sql-query: %s", query)
 		logrus.Errorf("error update user: %s", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrUserNotFound

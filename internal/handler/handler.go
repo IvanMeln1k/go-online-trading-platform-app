@@ -39,7 +39,7 @@ func (h *Handler) InitRoutes() *echo.Echo {
 		auth.POST("/refresh", h.refresh)
 		auth.DELETE("/logout", h.logout)
 		auth.DELETE("/logout-all", h.logoutAll)
-		auth.POST("/verify-email", h.verifyEmail)
+		auth.GET("/verification", h.verifyEmail)
 		auth.POST("/resend-email", h.resendEmail, h.userIdentity)
 	}
 

@@ -147,11 +147,11 @@ func (h *Handler) logoutAll(c echo.Context) error {
 }
 
 type VerifyEmailReturn struct {
-	status string
+	Status string `json:"status"`
 }
 
 func (h *Handler) verifyEmail(c echo.Context) error {
-	emailToken := c.Param("email")
+	emailToken := c.QueryParam("email")
 
 	if emailToken == "" {
 		return newErrorResponse(401, "No authorized")
@@ -173,16 +173,16 @@ func (h *Handler) verifyEmail(c echo.Context) error {
 		}
 		return newErrorResponse(500, "Internal server error")
 	}
-	return c.JSON(200, VerifyEmailReturn{status: "ok"})
+	return c.JSON(200, VerifyEmailReturn{Status: "ok"})
 }
 
 type ResendEmailReturn struct {
-	status string
+	Status string `json:"status"`
 }
 
 func (h *Handler) resendEmail(c echo.Context) error {
 	id, err := h.getUserId(c)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -191,5 +191,5 @@ func (h *Handler) resendEmail(c echo.Context) error {
 		logrus.Errorf("error send email verification: %s", err)
 		return newErrorResponse(500, "Internal server error")
 	}
-	return c.JSON(200, ResendEmailReturn{status: "ok"})
+	return c.JSON(200, ResendEmailReturn{Status: "ok"})
 }
