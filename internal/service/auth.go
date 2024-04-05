@@ -85,7 +85,15 @@ func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error)
 	return id, nil
 }
 
-func (s *AuthService) ResendEmail(ctx context.Context, user domain.User) error {
+func (s *AuthService) ResendEmail(ctx context.Context, id int) error {
+	user, err := s.usersRepo.GetById(ctx, id)
+	if err != nil {
+		logrus.Errorf("Error get user from repositiry when resend email: %s", err)
+		if errors.Is(repository.ErrUserNotFound, err){
+			return ErrUserNotFound
+		}
+		return ErrInternal
+	}
 	emailToken, err := s.tokenManager.CreateEmailToken(user.Email)
 	if err != nil {
 		return ErrSendEmailVerification
@@ -113,6 +121,7 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email string) error {
 		return ErrInternal
 	}
 	var emailVefiried bool
+
 	emailVefiried = true
 	_, err = s.usersRepo.Update(ctx, user.Id, domain.UserUpdate{
 		EmailVefiried: &emailVefiried,

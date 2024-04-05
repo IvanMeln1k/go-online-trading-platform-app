@@ -181,21 +181,14 @@ type ResendEmailReturn struct {
 }
 
 func (h *Handler) resendEmail(c echo.Context) error {
-	var user domain.User
+	id, err := h.getUserId(c)
+	if err != nil{
+		return err
+	}
 
-	if err := c.Bind(&user); err != nil {
-		logrus.Errorf("error bind user: %s", err)
-		return newErrorResponse(400, "Bad request")
-	}
-	if err := c.Validate(user); err != nil {
-		logrus.Errorf("error validate user: %s", err)
-		return newErrorResponse(400, err.Error())
-	}
-	err := h.services.Auth.ResendEmail(c.Request().Context(), user)
+	err = h.services.Auth.ResendEmail(c.Request().Context(), id)
 	if err != nil {
-		if errors.Is(service.ErrSendEmailVerification, err) {
-			return newErrorResponse(500, "Internal verification error")
-		}
+		logrus.Errorf("error send email verification: %s", err)
 		return newErrorResponse(500, "Internal server error")
 	}
 	return c.JSON(200, ResendEmailReturn{status: "ok"})
