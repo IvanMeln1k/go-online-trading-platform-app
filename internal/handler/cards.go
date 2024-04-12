@@ -43,12 +43,8 @@ func (h *Handler) getCard(c echo.Context) error {
 	}
 	id, err := h.getUserId(c)
 	if err != nil {
-		if errors.Is(service.ErrUserNotFound, err) {
-			logrus.Errorf("UserNotFound error in handler: %s", err)
-			return newErrorResponse(404, "User not found")
-		}
-		logrus.Errorf("Handler getCard error: %s", err)
-		return newErrorResponse(500, "Internal server error")
+		logrus.Errorf("Handler getUserId error:%s", err)
+		return err
 	}
 	card, err := h.services.Cards.Get(c.Request().Context(), id, cardId)
 	if err != nil {
@@ -65,31 +61,32 @@ func (h *Handler) getCard(c echo.Context) error {
 func (h *Handler) addCard(c echo.Context) error {
 	var CardData domain.Card
 	if err := c.Bind(&CardData); err != nil {
-		//*******************
-		//*Въебать валидацию*
-		//*******************
 		return newErrorResponse(500, "Internal server error")
 	}
-	if re := regexp.MustCompile(`^\d{16}$`); !re.MatchString(CardData.Number) {
+	if re, err := regexp.Compile(`^\d{16}$`); !re.MatchString(CardData.Number) {
+		if err != nil {
+			return newErrorResponse(500, "Validation error")
+		}
 		return newErrorResponse(400, "Validation error")
 	}
-	if re := regexp.MustCompile(`^\d{3}$`); !re.MatchString(CardData.Cvv) {
+	if re, err := regexp.Compile(`^\d{3}$`); !re.MatchString(CardData.Cvv) {
+		if err != nil {
+			return newErrorResponse(500, "Validation error")
+		}
 		return newErrorResponse(400, "Validation error")
 	}
-	if re := regexp.MustCompile(`([01][0-9]|2[0-9])\/[0-9]{2}$`); !re.MatchString(CardData.Data) {
+	if re, err := regexp.Compile(`([01][0-9]|2[0-9])\/[0-9]{2}$`); !re.MatchString(CardData.Data) {
+		if err != nil {
+			return newErrorResponse(500, "Validation error")
+		}
 		return newErrorResponse(400, "Validation error")
 	}
 	id, err := h.getUserId(c)
 	if err != nil {
-		if errors.Is(service.ErrUserNotFound, err) {
-			logrus.Errorf("UserNotFound error in handler: %s", err)
-			return newErrorResponse(404, "User not found")
-		}
-		logrus.Errorf("Handler addCard error: %s", err)
-		return newErrorResponse(500, "Internal server error")
+		logrus.Errorf("Handler error: %s", err)
+		return err
 	}
 	CardId, err := h.services.Cards.Create(c.Request().Context(), id, CardData)
-	//Cделать проверку на существование карты
 	if err != nil {
 		logrus.Errorf("Handler createCard error: %s", err)
 		return newErrorResponse(500, "Internal server error")
@@ -98,7 +95,7 @@ func (h *Handler) addCard(c echo.Context) error {
 }
 
 func (h *Handler) deleteCard(c echo.Context) error {
-	cardIdstr := c.QueryParam("cardId")
+	cardIdstr := c.Param("cardId")
 	cardId, err := strconv.Atoi(cardIdstr)
 	if err != nil {
 		logrus.Errorf("Convert string to int error in handler: %s", err)
@@ -106,12 +103,8 @@ func (h *Handler) deleteCard(c echo.Context) error {
 	}
 	id, err := h.getUserId(c)
 	if err != nil {
-		if errors.Is(service.ErrUserNotFound, err) {
-			logrus.Errorf("UserNotFound error in handler: %s", err)
-			return newErrorResponse(404, "User not found")
-		}
 		logrus.Errorf("Handler deleteCard error: %s", err)
-		return newErrorResponse(500, "Internal server error")
+		return err
 	}
 	err = h.services.Cards.Delete(c.Request().Context(), id, cardId)
 	if err != nil {
