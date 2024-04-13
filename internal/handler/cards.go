@@ -35,7 +35,7 @@ func (h *Handler) getAllCards(c echo.Context) error {
 }
 
 func (h *Handler) getCard(c echo.Context) error {
-	cardIdstr := c.QueryParam("cardId")
+	cardIdstr := c.Param("cardId")
 	cardId, err := strconv.Atoi(cardIdstr)
 	if err != nil {
 		logrus.Errorf("Convert string to int error in handler: %s", err)
