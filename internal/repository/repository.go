@@ -30,6 +30,13 @@ type Users interface {
 	Update(ctx context.Context, id int, data domain.UserUpdate) (domain.User, error)
 }
 
+type Cards interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Card, error)
+	Get(ctx context.Context, cardId int) (domain.Card, error)
+	Create(ctx context.Context, card domain.Card) (int, error)
+	Delete(ctx context.Context, cardId int) error
+}
+
 type Sessions interface {
 	// Creates a session record in DB
 	Create(ctx context.Context, session domain.Session) error
@@ -49,6 +56,7 @@ type Sessions interface {
 type Repository struct {
 	Users
 	Sessions
+	Cards
 }
 
 func NewRepository(db *sqlx.DB, rdb *redis.Client) *Repository {

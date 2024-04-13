@@ -43,5 +43,19 @@ func (h *Handler) InitRoutes() *echo.Echo {
 		auth.POST("/resend-email", h.resendEmail, h.userIdentity)
 	}
 
+	api := router.Group("/api")
+	{
+		user := api.Group("/user")
+		{
+			cards := user.Group("/cards")
+			{
+				cards.GET("/", h.getAllCards)
+				cards.GET("/:id", h.getCard)
+				cards.POST("/", h.addCard)
+				cards.DELETE("/:id", h.deleteCard)
+			}
+		}
+	}
+
 	return router
 }

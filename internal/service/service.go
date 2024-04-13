@@ -26,8 +26,16 @@ type Auth interface {
 	ResendEmail(ctx context.Context, id int) error
 }
 
+type Cards interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Card, error)
+	Get(ctx context.Context, userId int, cardId int) (domain.Card, error)
+	Create(ctx context.Context, userId int, card domain.Card) (int, error)
+	Delete(ctx context.Context, userId int, cardId int) error
+}
+
 type Service struct {
 	Auth
+	Cards
 }
 
 type Deps struct {
