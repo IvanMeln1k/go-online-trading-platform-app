@@ -1,0 +1,456 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Online-trading-platformAPI
+  description: Online-trading-platform
+servers:
+  - url: http://localhost:8000
+paths:
+  /auth/sign-up:
+    post:
+      operationId: Sign-up
+      description: "Sign up user"
+      tags:
+        - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username 
+                - name
+                - email
+                - password
+                - emailVerified
+              properties:
+                username:
+                  type: string
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                emailVerified:
+                  type: boolean
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: 
+                    type: string
+                    format: uuid
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "409":
+          description: "Email/Username already in use"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/sign-in:
+    post:
+      operationId: Sign-in
+      description: "Sign-in user"
+      tags: 
+        - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+            description: "Success"
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required:
+                      - refreshToken
+                      - accessToken
+                  properties:
+                    accessToken:
+                      type: string
+                    refreshToken: 
+                      type: string
+        "400":
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "401":
+          description: "Invalid username/password or Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/refresh:
+    post:
+      operationId: Refresh
+      description: "Refresh tokens"
+      tags: 
+        - Token
+      parameters:
+      - name: refreshToken
+        in: cookie
+        required: true
+        schema:
+          type: object
+          required:
+            - refreshToken
+          properties:
+            refreshToken:
+              type: string
+      responses:
+        "200":
+              description: "Success"
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    required:
+                      - refreshToken
+                      - accessToken
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken: 
+                        type: string           
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth//logout:
+    delete:
+      operationId: Logout
+      description: "Delete user's session"
+      tags: 
+        - Logout
+      parameters:
+      - name: refreshToken
+        in: cookie
+        required: true
+        schema:
+          type: object
+          required:
+            - refreshToken
+          properties:
+            refreshToken:
+              type: string
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/logout-all:
+    delete:
+      operationId: Logout-all
+      description: "Delete all user's session"
+      tags: 
+        - Logout
+      parameters:
+      - name: refreshToken
+        in: cookie
+        required: true
+        schema:
+          type: object
+          required:
+            - refreshToken
+          properties:
+            refreshToken:
+              type: string
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/verification:
+    get:
+      operationId: Verification
+      description: "Verify email"
+      tags:
+        - Email
+      parameters:
+      - name: 'email'
+        in: 'query'
+        schema:
+          type: string
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        "401":
+          description: "Token is expired/invalid or User not found or Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /auth/resend-email:
+    get:
+      operationId: Resend-email
+      description: "Resend verification email"
+      tags:
+        - Email
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /api/user/cards:
+    get:
+      operationId: Get-all-cards
+      description: "Get all cards"
+      tags:
+        - Card
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema: 
+                $ref: "#/components/schemas/Card"
+               
+        "404":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    post:
+      operationId: Add-card
+      description: "Add card"
+      tags: 
+        - Card
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Card"
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - cardId
+                properties:
+                  cardId:
+                    type: integer
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+  /api/user/cards/{cardId}:
+    delete:
+      operationId: Delete-card
+      description: "Delete card by id"
+      tags: 
+        - Card
+      parameters:
+      - name: cardId
+        in: path
+        schema:
+          type: integer
+        required: true
+      responses:
+        "200":  
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    get:
+      parameters:
+      - name: cardId
+        in: path
+        schema:
+          type: integer
+        required: true
+      operationId: Get-the-card
+      description: "Get the card by id"
+      tags:
+        - Card
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Card"
+        "404":
+          description: "Card not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+
+components:
+  schemas:
+    Card:
+      type: object
+      required:
+        - id
+        - number
+        - data
+        - cvv
+        - userId
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        data:
+          type: string
+        cvv:
+          type: string
+        userId:
+          type: integer
+    Message:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        
+    
