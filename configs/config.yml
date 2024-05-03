@@ -17,7 +17,7 @@ rdb:
   db: "0"
 
 smtp:
-  email: "IvanMelnikovF@gmail.com"
+  email: "lyserg119@gmail.com"
   host: "smtp.gmail.com"
   port: "587"
 

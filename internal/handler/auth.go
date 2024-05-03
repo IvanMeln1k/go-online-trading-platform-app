@@ -11,185 +11,128 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type SignUpReturn struct {
-	Id int `json:"id"`
-}
-
-func (h *Handler) signUp(c echo.Context) error {
-	var user domain.User
-
-	if err := c.Bind(&user); err != nil {
+func (h *Handler) SignUp(ctx echo.Context) error {
+	var body SignUpJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
 		logrus.Errorf("error bind user: %s", err)
-		return newErrorResponse(400, "Bad request")
+		return echo.NewHTTPError(400, Message{Message: "Bad request"})
 	}
-	if err := c.Validate(user); err != nil {
-		logrus.Errorf("error validate user: %s", err)
-		return newErrorResponse(400, err.Error())
-	}
-
-	userId, err := h.services.Auth.SignUp(c.Request().Context(), user)
+	userId, err := h.services.Auth.SignUp(ctx.Request().Context(), domain.User{
+		Email:    string(body.Email),
+		Name:     body.Name,
+		Username: body.Username,
+		Password: body.Password,
+	})
 	if err != nil {
 		logrus.Errorf("error create user: %s", err)
 		if errors.Is(service.ErrEmailAlreadyInUse, err) {
-			return newErrorResponse(409, "Email already in use")
+			return echo.NewHTTPError(409, Message{Message: "Email already in use"})
 		}
 		if errors.Is(service.ErrUsernameAlreadyInUse, err) {
-			return newErrorResponse(409, "Username already in use")
+			return echo.NewHTTPError(409, Message{Message: "Username already in use"})
 		}
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-
-	return c.JSON(200, SignUpReturn{
-		Id: userId,
-	})
+	return ctx.JSON(200, map[string]interface{}{"id": userId})
 }
 
-type signInInput struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
-
-type signInReturn struct {
-	Tokens domain.Tokens `json:"tokens"`
-}
-
-func (h *Handler) signIn(c echo.Context) error {
-	user := new(signInInput)
-	if err := c.Bind(user); err != nil {
-		return newErrorResponse(400, err.Error())
+func (h *Handler) SignIn(ctx echo.Context) error {
+	var body SignInJSONRequestBody
+	if err := ctx.Bind(body); err != nil {
+		return echo.NewHTTPError(400, Message{Message: "Bad request"})
 	}
-	if err := c.Validate(user); err != nil {
-		return newErrorResponse(400, err.Error())
-	}
-
-	tokens, err := h.services.Auth.SignIn(c.Request().Context(), user.Email, user.Password)
+	tokens, err := h.services.Auth.SignIn(ctx.Request().Context(), string(body.Email), body.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidEmailOrPassowrd) {
-			return newErrorResponse(401, "Invalid username or password")
+			return echo.NewHTTPError(401, Message{Message: "Invalid username or password"})
 		}
-		return newErrorResponse(401, "Anauthorized")
+		return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 	}
 
-	c.SetCookie(&http.Cookie{
+	ctx.SetCookie(&http.Cookie{
 		Name:     "refreshToken",
 		Value:    tokens.RefreshToken,
 		HttpOnly: true,
 	})
-	return c.JSON(200, signInReturn{
-		Tokens: tokens,
-	})
+	return ctx.JSON(200, map[string]interface{}{"tokens": tokens})
 }
 
-type RefreshReturn struct {
-	Tokens domain.Tokens `json:"tokens"`
-}
-
-func (h *Handler) refresh(c echo.Context) error {
-	refreshToken, err := c.Cookie("refreshToken")
-	if err != nil {
-		return newErrorResponse(401, "Unauthorized")
-	}
-	tokens, err := h.services.Auth.Refresh(c.Request().Context(), refreshToken.Value)
+func (h *Handler) Refresh(ctx echo.Context, params RefreshParams) error {
+	tokens, err := h.services.Auth.Refresh(ctx.Request().Context(), params.RefreshToken.RefreshToken)
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
-			return newErrorResponse(401, "Unauthorized")
+			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 		} else if errors.Is(err, service.ErrInternal) {
-			return newErrorResponse(500, "Internal server error")
+			return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 		}
-		return newErrorResponse(401, "Unauthorized")
+		return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 	}
-	c.SetCookie(&http.Cookie{
+	ctx.SetCookie(&http.Cookie{
 		Name:     "refreshToken",
 		Value:    tokens.RefreshToken,
 		HttpOnly: true,
 	})
-	return c.JSON(200, RefreshReturn{
-		Tokens: tokens,
-	})
+	return ctx.JSON(200, map[string]interface{}{"tokens": tokens})
 }
 
-type LogoutReturn struct {
-	Status string `json:"status"`
-}
-
-func (h *Handler) logout(c echo.Context) error {
-	refreshToken, err := c.Cookie("refreshToken")
-	if err != nil {
-		return newErrorResponse(401, "Unauthorized")
-	}
-	err = h.services.Auth.Logout(c.Request().Context(), refreshToken.Value)
+func (h *Handler) Logout(ctx echo.Context, params LogoutParams) error {
+	err := h.services.Auth.Logout(ctx.Request().Context(), params.RefreshToken.RefreshToken)
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
-			return newErrorResponse(401, "Unauthorized")
+			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 		}
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	return c.JSON(200, LogoutReturn{
-		Status: "ok",
-	})
+	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
 
-func (h *Handler) logoutAll(c echo.Context) error {
-	refreshToken, err := c.Cookie("refreshToken")
-	if err != nil {
-		return newErrorResponse(401, "Unauthorized")
-	}
-	err = h.services.Auth.LogoutAll(c.Request().Context(), refreshToken.Value)
+func (h *Handler) LogoutAll(ctx echo.Context, params LogoutAllParams) error {
+	err := h.services.Auth.LogoutAll(ctx.Request().Context(), params.RefreshToken.RefreshToken)
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
-			return newErrorResponse(401, "Unauthorized")
+			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 		}
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	return c.JSON(200, LogoutReturn{
-		Status: "ok",
-	})
+	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
 
-type VerifyEmailReturn struct {
-	Status string `json:"status"`
-}
+func (h *Handler) Verification(ctx echo.Context, params VerificationParams) error {
+	emailToken := params.Email
 
-func (h *Handler) verifyEmail(c echo.Context) error {
-	emailToken := c.QueryParam("email")
-
-	if emailToken == "" {
-		return newErrorResponse(401, "No authorized")
+	if *emailToken == "" {
+		return echo.NewHTTPError(401, Message{Message: "No authorized"})
 	}
-	email, err := h.tokenManager.ParseEmailToken(emailToken)
+	email, err := h.tokenManager.ParseEmailToken(*emailToken)
 	if err != nil {
 		if errors.Is(tokens.ErrTokenExpired, err) {
-			return newErrorResponse(401, "Token is expired")
+			return echo.NewHTTPError(401, Message{Message: "Token is expired"})
 		}
 		if errors.Is(tokens.ErrTokenInvalid, err) {
-			return newErrorResponse(401, "Token is invalid")
+			return echo.NewHTTPError(401, Message{Message: "Token is invalid"})
 		}
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	err = h.services.Auth.VerifyEmail(c.Request().Context(), email)
+	err = h.services.Auth.VerifyEmail(ctx.Request().Context(), email)
 	if err != nil {
 		if errors.Is(service.ErrUserNotFound, err) {
-			return newErrorResponse(401, "User not found")
+			return echo.NewHTTPError(401, Message{Message: "User not found"})
 		}
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	return c.JSON(200, VerifyEmailReturn{Status: "ok"})
+	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
 
-type ResendEmailReturn struct {
-	Status string `json:"status"`
-}
-
-func (h *Handler) resendEmail(c echo.Context) error {
-	id, err := h.getUserId(c)
+func (h *Handler) ResendEmail(ctx echo.Context) error {
+	id, err := h.getUserId(ctx)
 	if err != nil {
 		return err
 	}
 
-	err = h.services.Auth.ResendEmail(c.Request().Context(), id)
+	err = h.services.Auth.ResendEmail(ctx.Request().Context(), id)
 	if err != nil {
 		logrus.Errorf("error send email verification: %s", err)
-		return newErrorResponse(500, "Internal server error")
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	return c.JSON(200, ResendEmailReturn{Status: "ok"})
+	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
