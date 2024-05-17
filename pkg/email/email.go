@@ -11,6 +11,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//go:generate mockgen -source=email.go -destination=mocks/mock.go
+
 type SMTPSender struct {
 	Email string
 	Pass  string

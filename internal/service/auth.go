@@ -47,6 +47,24 @@ func NewAuthService(usersRepo repository.Users, sessionsRepo repository.Sessions
 	}
 }
 
+func (s *AuthService) sendEmailVerificationToken(ctx context.Context, email string) error {
+	emailToken, err := s.tokenManager.CreateEmailToken(email)
+	if err != nil {
+
+		return ErrSendEmailVerification
+	}
+
+	err = s.emailSender.Send("templates/verification.html", email,
+		"GO Online-Trading-Platform verification email", map[string]string{
+			"Link": fmt.Sprintf("%s?email=%s", s.verificationAddr, emailToken),
+		})
+	if err != nil {
+		return ErrSendEmailVerification
+	}
+
+	return nil
+}
+
 func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error) {
 	_, err := s.usersRepo.GetByEmail(ctx, user.Email)
 	if err != nil && err != repository.ErrUserNotFound {
@@ -70,17 +88,7 @@ func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error)
 		return 0, ErrInternal
 	}
 
-	emailToken, err := s.tokenManager.CreateEmailToken(user.Email)
-	if err != nil {
-		return 0, ErrSendEmailVerification
-	}
-	err = s.emailSender.Send("templates/verification.html", user.Email,
-		"GO Online-Trading-Platform verification email", map[string]string{
-			"Link": fmt.Sprintf("%s?email=%s", s.verificationAddr, emailToken),
-		})
-	if err != nil {
-		return 0, ErrSendEmailVerification
-	}
+	err = s.sendEmailVerificationToken(ctx, user.Email)
 
 	return id, nil
 }
@@ -94,17 +102,8 @@ func (s *AuthService) ResendEmail(ctx context.Context, id int) error {
 		}
 		return ErrInternal
 	}
-	emailToken, err := s.tokenManager.CreateEmailToken(user.Email)
-	if err != nil {
-		return ErrSendEmailVerification
-	}
-	err = s.emailSender.Send("templates/verification.html", user.Email,
-		"GO Online-Trading-Platform verification email", map[string]string{
-			"Link": fmt.Sprintf("%s?email=%s", s.verificationAddr, emailToken),
-		})
-	if err != nil {
-		return ErrSendEmailVerification
-	}
+
+	err = s.sendEmailVerificationToken(ctx, user.Email)
 
 	return nil
 }

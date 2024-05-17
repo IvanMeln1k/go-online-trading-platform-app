@@ -18,9 +18,16 @@ var (
 	ErrCardNotFound = errors.New("card not found")
 )
 
+func NewCardsRepository(db *sqlx.DB) *CardsRepository {
+	return &CardsRepository{
+		db: db,
+	}
+}
+
 func (r *CardsRepository) Create(ctx context.Context, card domain.Card) (int, error) {
 	var id int
-	row := r.db.QueryRow(`INSERT INTO cards (number, data, cvv, users_id) VALUES ($1, $2, $3, $4) RETURNING id`, card.Number, card.Data, card.Cvv, card.UserId)
+	row := r.db.QueryRow(`INSERT INTO cards (number, data, cvv, users_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+		card.Number, card.Data, card.Cvv, card.UserId)
 	if err := row.Scan(&id); err != nil {
 		logrus.Errorf("Creation error of card: %s", err)
 		return 0, ErrInternal
@@ -29,25 +36,27 @@ func (r *CardsRepository) Create(ctx context.Context, card domain.Card) (int, er
 }
 
 func (r *CardsRepository) Get(ctx context.Context, cardId int) (domain.Card, error) {
-	var Card domain.Card
-	row := r.db.QueryRow(`SELECT * FROM cards WHERE id = $1`, cardId)
-	if err := row.Scan(&Card); err != nil {
+	var card domain.Card
+
+	row := r.db.QueryRowxContext(ctx, `SELECT * FROM cards WHERE id = $1`, cardId)
+	if err := row.StructScan(&card); err != nil {
 		logrus.Errorf("Error get card from postgresql: %s", err)
 		if errors.Is(sql.ErrNoRows, err) {
-			return Card, ErrCardNotFound
+			return card, ErrCardNotFound
 		}
-		return Card, ErrInternal
+		return card, ErrInternal
 	}
-	return Card, nil
+
+	return card, nil
 
 }
 
 func (r *CardsRepository) GetAll(ctx context.Context, userId int) ([]domain.Card, error) {
-	var cards []domain.Card
-	err := r.db.Select(cards, "SELECT * FROM cards WHERE user_id = $1", userId)
+	cards := []domain.Card{}
+	err := r.db.Select(&cards, "SELECT * FROM cards WHERE user_id = $1", userId)
 	if err != nil {
 		logrus.Errorf("Error get cards from postgresql: %s", err)
-		return cards, ErrInternal
+		return nil, ErrInternal
 	}
 	return cards, nil
 }

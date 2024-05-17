@@ -25,22 +25,6 @@ func NewHandler(deps Deps) *Handler {
 
 func (h *Handler) InitRoutes() *echo.Echo {
 	router := echo.New()
-
 	RegisterHandlers(router, h)
-
-	api := router.Group("/api")
-	{
-		user := api.Group("/user")
-		{
-			cards := user.Group("/cards")
-			{
-				cards.GET("/", h.getAllCards)
-				cards.GET("/:id", h.getCard)
-				cards.POST("/", h.addCard)
-				cards.DELETE("/:id", h.deleteCard)
-			}
-		}
-	}
-
 	return router
 }

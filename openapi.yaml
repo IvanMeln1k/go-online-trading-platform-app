@@ -87,6 +87,10 @@ paths:
       responses:
         "200":
             description: "Success"
+            headers:
+              Set-Cookie:
+                type: string
+                example: some-refresh-token; Path=/; HttpOnly
             content:
               application/json:
                 schema:
@@ -184,12 +188,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - status
-                properties:
-                  status:
-                    type: string
+                $ref: "#/components/schemas/Message"
         "401":
           description: "Unauthorized"
           content:
@@ -225,12 +224,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - status
-                properties:
-                  status:
-                    type: string
+                $ref: "#/components/schemas/Message"
         "401":
           description: "Unauthorized"
           content:
@@ -250,7 +244,7 @@ paths:
       tags:
         - Email
       parameters:
-      - name: 'email'
+      - name: 'token'
         in: 'query'
         schema:
           type: string
@@ -260,12 +254,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - status
-                properties:
-                  status:
-                    type: string
+                $ref: "#/components/schemas/Message"
         "401":
           description: "Token is expired/invalid or User not found or Unauthorized"
           content:
@@ -290,12 +279,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - status
-                properties:
-                  status:
-                    type: string
+                $ref: "#/components/schemas/Message"
         "500":
           description: "Internal server error"
           content:
@@ -313,9 +297,13 @@ paths:
           description: "Success"
           content:
             application/json:
-              schema: 
-                $ref: "#/components/schemas/Card"
-               
+              schema:
+                type: object
+                properties:
+                  cards:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Card"
         "404":
           description: "User not found"
           content:
@@ -362,7 +350,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-
   /api/user/cards/{cardId}:
     delete:
       operationId: Delete-card
@@ -381,12 +368,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - status
-                properties:
-                  status:
-                    type: string
+                $ref: "#/components/schemas/Message"
         "500":
           description: "Internal server error"
           content:

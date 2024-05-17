@@ -17,6 +17,8 @@ var (
 	ErrInternal = errors.New("internal error")
 )
 
+//go:generate mockgen -source=repository.go -destination=mocks/mock.go
+
 type Users interface {
 	// Creates a user in DB
 	Create(ctx context.Context, user domain.User) (int, error)
@@ -63,5 +65,6 @@ func NewRepository(db *sqlx.DB, rdb *redis.Client) *Repository {
 	return &Repository{
 		Users:    NewUsersRepository(db),
 		Sessions: NewSessionsRepository(rdb),
+		Cards:    NewCardsRepository(db),
 	}
 }

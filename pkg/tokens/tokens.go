@@ -14,6 +14,8 @@ var (
 	ErrTokenInvalid = errors.New("token is invalid")
 )
 
+//go:generate mockgen -source=tokens.go -destination=mocks/mock.go
+
 type TokenManagerI interface {
 	CreateRefreshToken() (string, error)
 	CreateAccessToken(userId int) (string, error)

@@ -42,6 +42,7 @@ func (h *Handler) SignIn(ctx echo.Context) error {
 		return echo.NewHTTPError(400, Message{Message: "Bad request"})
 	}
 	tokens, err := h.services.Auth.SignIn(ctx.Request().Context(), string(body.Email), body.Password)
+
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidEmailOrPassowrd) {
 			return echo.NewHTTPError(401, Message{Message: "Invalid username or password"})
@@ -54,11 +55,13 @@ func (h *Handler) SignIn(ctx echo.Context) error {
 		Value:    tokens.RefreshToken,
 		HttpOnly: true,
 	})
+
 	return ctx.JSON(200, map[string]interface{}{"tokens": tokens})
 }
 
 func (h *Handler) Refresh(ctx echo.Context, params RefreshParams) error {
 	tokens, err := h.services.Auth.Refresh(ctx.Request().Context(), params.RefreshToken.RefreshToken)
+
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
 			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
@@ -67,38 +70,44 @@ func (h *Handler) Refresh(ctx echo.Context, params RefreshParams) error {
 		}
 		return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 	}
+
 	ctx.SetCookie(&http.Cookie{
 		Name:     "refreshToken",
 		Value:    tokens.RefreshToken,
 		HttpOnly: true,
 	})
+
 	return ctx.JSON(200, map[string]interface{}{"tokens": tokens})
 }
 
 func (h *Handler) Logout(ctx echo.Context, params LogoutParams) error {
 	err := h.services.Auth.Logout(ctx.Request().Context(), params.RefreshToken.RefreshToken)
+
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
 			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 		}
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
+
 	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
 
 func (h *Handler) LogoutAll(ctx echo.Context, params LogoutAllParams) error {
 	err := h.services.Auth.LogoutAll(ctx.Request().Context(), params.RefreshToken.RefreshToken)
+
 	if err != nil {
 		if errors.Is(err, service.ErrSessionInvalidOrExpired) {
 			return echo.NewHTTPError(401, Message{Message: "Unauthorized"})
 		}
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
+
 	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }
 
 func (h *Handler) Verification(ctx echo.Context, params VerificationParams) error {
-	emailToken := params.Email
+	emailToken := params.Token
 
 	if *emailToken == "" {
 		return echo.NewHTTPError(401, Message{Message: "No authorized"})
@@ -134,5 +143,6 @@ func (h *Handler) ResendEmail(ctx echo.Context) error {
 		logrus.Errorf("error send email verification: %s", err)
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
+
 	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
 }

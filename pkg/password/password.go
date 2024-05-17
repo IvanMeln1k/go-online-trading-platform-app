@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+//go:generate mockgen -source=password.go -destination=mocks/mock.go
+
 type PasswordManagerI interface {
 	HashPassword(password string) string
 	CheckPassword(password string, hashedPassword string) bool
