@@ -29,8 +29,8 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 func (r *UsersRepository) Create(ctx context.Context, user domain.User) (int, error) {
 	var id int
 
-	query := fmt.Sprintf(`INSERT INTO %s (username, name, email, hash_password)
-	VALUES ($1, $2, $3, $4) RETURNING id`, usersTable)
+	query := fmt.Sprintf("INSERT INTO %s (username, name, email, hash_password)"+
+		" VALUES ($1, $2, $3, $4) RETURNING id", usersTable)
 	row := r.db.QueryRow(query, user.Username, user.Name, user.Email, user.Password)
 	if err := row.Scan(&id); err != nil {
 		logrus.Errorf("error create user into db: %s", err)

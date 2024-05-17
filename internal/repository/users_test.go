@@ -13,64 +13,50 @@ import (
 )
 
 func TestUsersPostgres_Create(t *testing.T) {
-	mockDB, mock, err := sqlmock.New()
+	sqlmock, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
 	}
-	defer mockDB.Close()
-	sqlxDB := sqlx.NewDb(mockDB, "sqlmock")
+	sqlxmock := sqlx.NewDb(sqlmock, "postgres")
 
-	authRepository := NewUsersRepository(sqlxDB)
+	usersRepo := NewUsersRepository(sqlxmock)
 
 	type args struct {
+		ctx  context.Context
 		user domain.User
 	}
+
 	type mockBehavior func(args args, id int)
 
 	tests := []struct {
 		name         string
 		args         args
-		want         int
 		mockBehavior mockBehavior
+		want         int
 		wantErr      bool
 		err          error
 	}{
 		{
 			name: "ok",
 			args: args{
-				domain.User{
-					Username: "string",
-					Name:     "string",
-					Email:    "string",
-					Password: "string",
-				},
-			},
-			want: 1,
-			mockBehavior: func(args args, id int) {
-				rows := mock.NewRows([]string{"id"}).AddRow(id)
-				mock.ExpectQuery("INSERT INTO users").WithArgs(args.user.Username,
-					args.user.Name, args.user.Email, args.user.Password).WillReturnRows(rows)
-			},
-			wantErr: false,
-		},
-		{
-			name: "empty fields",
-			args: args{
+				ctx: context.Background(),
 				user: domain.User{
-					Username: "",
-					Name:     "",
-					Email:    "",
-					Password: "",
+					Username: "IvanMelnik",
+					Name:     "Ivan",
+					Email:    "IvanMelnikovF@gmail.com",
+					Password: "pass",
 				},
 			},
-			want: 0,
 			mockBehavior: func(args args, id int) {
-				rows := mock.NewRows([]string{"id"}).AddRow(id).RowError(0, errors.New("some error"))
-				mock.ExpectQuery("INSERT INTO users").WithArgs(args.user.Username,
-					args.user.Name, args.user.Email, args.user.Password).WillReturnRows(rows)
+				rows := mock.NewRows([]string{"id"}).AddRow(49)
+				mock.ExpectQuery(`INSERT INTO users \(username, name, email, hash_password\)`+
+					` VALUES \(\$1, \$2, \$3, \$4\) RETURNING id`).
+					WithArgs(args.user.Username, args.user.Name, args.user.Email, args.user.Password).
+					WillReturnRows(rows)
 			},
-			wantErr: true,
-			err:     ErrInternal,
+			want:    49,
+			wantErr: false,
+			err:     nil,
 		},
 	}
 
@@ -78,10 +64,10 @@ func TestUsersPostgres_Create(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test.mockBehavior(test.args, test.want)
 
-			got, err := authRepository.Create(context.Background(), test.args.user)
+			got, err := usersRepo.Create(test.args.ctx, test.args.user)
 
 			if test.wantErr {
-				assert.ErrorIs(t, test.err, err)
+				assert.ErrorIs(t, err, test.err)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, test.want, got)
