@@ -83,12 +83,16 @@ func (s *AuthService) SignUp(ctx context.Context, user domain.User) (int, error)
 	}
 
 	user.Password = s.passwordManager.HashPassword(user.Password)
+	user.Role = "user"
 	id, err := s.usersRepo.Create(ctx, user)
 	if err != nil {
 		return 0, ErrInternal
 	}
 
 	err = s.sendEmailVerificationToken(ctx, user.Email)
+	if err != nil {
+		return 0, err
+	}
 
 	return id, nil
 }
@@ -104,6 +108,9 @@ func (s *AuthService) ResendEmail(ctx context.Context, id int) error {
 	}
 
 	err = s.sendEmailVerificationToken(ctx, user.Email)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -120,9 +127,8 @@ func (s *AuthService) VerifyEmail(ctx context.Context, email string) error {
 	if user.EmailVerified {
 		return ErrInternal
 	}
-	var emailVefiried bool
 
-	emailVefiried = true
+	emailVefiried := true
 	_, err = s.usersRepo.Update(ctx, user.Id, domain.UserUpdate{
 		EmailVefiried: &emailVefiried,
 	})

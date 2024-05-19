@@ -45,13 +45,14 @@ func TestUsersPostgres_Create(t *testing.T) {
 					Name:     "Ivan",
 					Email:    "IvanMelnikovF@gmail.com",
 					Password: "pass",
+					Role:     "user",
 				},
 			},
 			mockBehavior: func(args args, id int) {
 				rows := mock.NewRows([]string{"id"}).AddRow(49)
-				mock.ExpectQuery(`INSERT INTO users \(username, name, email, hash_password\)`+
-					` VALUES \(\$1, \$2, \$3, \$4\) RETURNING id`).
-					WithArgs(args.user.Username, args.user.Name, args.user.Email, args.user.Password).
+				mock.ExpectQuery(`INSERT INTO users \(username, name, email, hash_password, role\)`+
+					` VALUES \(\$1, \$2, \$3, \$4\, \$5\) RETURNING id`).
+					WithArgs(args.user.Username, args.user.Name, args.user.Email, args.user.Password, args.user.Role).
 					WillReturnRows(rows)
 			},
 			want:    49,
