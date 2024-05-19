@@ -29,9 +29,9 @@ func NewUsersRepository(db *sqlx.DB) *UsersRepository {
 func (r *UsersRepository) Create(ctx context.Context, user domain.User) (int, error) {
 	var id int
 
-	query := fmt.Sprintf("INSERT INTO %s (username, name, email, hash_password)"+
-		" VALUES ($1, $2, $3, $4) RETURNING id", usersTable)
-	row := r.db.QueryRow(query, user.Username, user.Name, user.Email, user.Password)
+	query := fmt.Sprintf("INSERT INTO %s (username, name, email, hash_password, role)"+
+		" VALUES ($1, $2, $3, $4, $5) RETURNING id", usersTable)
+	row := r.db.QueryRow(query, user.Username, user.Name, user.Email, user.Password, user.Role)
 	if err := row.Scan(&id); err != nil {
 		logrus.Errorf("error create user into db: %s", err)
 		return 0, ErrInternal
@@ -45,7 +45,7 @@ func (r *UsersRepository) get(ctx context.Context, key string,
 	var user domain.User
 
 	query := fmt.Sprintf(`SELECT * FROM %s WHERE %s=$1`, usersTable, key)
-	err := r.db.Get(&user, query, value)
+	err := r.db.GetContext(ctx, &user, query, value)
 	if err != nil {
 		logrus.Errorf("error get user from db: %s", err)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -96,6 +96,9 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 	}
 	if data.EmailVefiried != nil {
 		addProp("email_verified", *data.EmailVefiried)
+	}
+	if data.Role != nil {
+		addProp("role", *data.Role)
 	}
 
 	setQuery := strings.Join(names, ", ")

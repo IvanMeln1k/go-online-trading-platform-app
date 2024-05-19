@@ -15,6 +15,7 @@ type User struct {
 	Email         string `json:"email" validate:"required,email"`
 	Password      string `json:"password" db:"hash_password" validate:"required"`
 	EmailVerified bool   `json:"emailVerified" db:"email_verified"`
+	Role          string `json:"role" db:"role"`
 }
 
 type UserUpdate struct {
@@ -23,10 +24,11 @@ type UserUpdate struct {
 	Email         *string
 	Password      *string
 	EmailVefiried *bool
+	Role          *string
 }
 
 func (u *UserUpdate) Validate() error {
-	if u.Username == nil && u.Name == nil && u.Email == nil && u.Password == nil {
+	if u.Username == nil && u.Name == nil && u.Email == nil && u.Password == nil && u.Role == nil {
 		return ErrUserUpdateHasNoValues
 	}
 	return nil
