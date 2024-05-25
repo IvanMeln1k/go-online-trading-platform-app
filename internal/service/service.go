@@ -24,6 +24,7 @@ type Auth interface {
 	LogoutAll(ctx context.Context, refreshToken string) error
 	Refresh(ctx context.Context, refreshToken string) (domain.Tokens, error)
 	ResendEmail(ctx context.Context, id int) error
+	GetUser(ctx context.Context, id int) (domain.User, error)
 }
 
 type Cards interface {

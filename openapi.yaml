@@ -121,6 +121,46 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
+  /auth/get-user:
+    get:
+      operationId: Get-user
+      description: "Get user"
+      tags:
+        - User
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - username 
+                  - name
+                  - email
+                  - password
+                  - emailVerified
+                  - role
+                properties:
+                  username:
+                    type: string
+                  name:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  password:
+                    type: string
+                  emailVerified:
+                    type: boolean
+                  role:
+                    type: string
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
   /auth/refresh:
     post:
       operationId: Refresh
