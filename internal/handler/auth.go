@@ -38,7 +38,7 @@ func (h *Handler) SignUp(ctx echo.Context) error {
 
 func (h *Handler) SignIn(ctx echo.Context) error {
 	var body SignInJSONRequestBody
-	if err := ctx.Bind(body); err != nil {
+	if err := ctx.Bind(&body); err != nil {
 		return echo.NewHTTPError(400, Message{Message: "Bad request"})
 	}
 	tokens, err := h.services.Auth.SignIn(ctx.Request().Context(), string(body.Email), body.Password)
@@ -90,7 +90,7 @@ func (h *Handler) Logout(ctx echo.Context, params LogoutParams) error {
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
 
-	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
+	return ctx.JSON(200, map[string]interface{}{"Message": "ok"})
 }
 
 func (h *Handler) LogoutAll(ctx echo.Context, params LogoutAllParams) error {
@@ -103,7 +103,7 @@ func (h *Handler) LogoutAll(ctx echo.Context, params LogoutAllParams) error {
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
 
-	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
+	return ctx.JSON(200, map[string]interface{}{"Message": "ok"})
 }
 
 func (h *Handler) Verification(ctx echo.Context, params VerificationParams) error {
@@ -129,7 +129,7 @@ func (h *Handler) Verification(ctx echo.Context, params VerificationParams) erro
 		}
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
-	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
+	return ctx.JSON(200, map[string]interface{}{"Message": "ok"})
 }
 
 func (h *Handler) ResendEmail(ctx echo.Context) error {
@@ -144,5 +144,20 @@ func (h *Handler) ResendEmail(ctx echo.Context) error {
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
 
-	return ctx.JSON(200, map[string]interface{}{"status": "ok"})
+	return ctx.JSON(200, map[string]interface{}{"Message": "ok"})
+}
+
+func (h *Handler) GetUser(ctx echo.Context) error {
+	id, err := h.getUserId(ctx)
+	if err != nil {
+		return err
+	}
+
+	user, err := h.services.Auth.GetUser(ctx.Request().Context(), id)
+	if err != nil {
+		logrus.Errorf("get user error: %s", err)
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
+	}
+
+	return ctx.JSON(200, map[string]interface{}{"user": user})
 }

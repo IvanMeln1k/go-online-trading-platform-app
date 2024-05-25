@@ -24,6 +24,7 @@ type Auth interface {
 	LogoutAll(ctx context.Context, refreshToken string) error
 	Refresh(ctx context.Context, refreshToken string) (domain.Tokens, error)
 	ResendEmail(ctx context.Context, id int) error
+	GetUser(ctx context.Context, id int) (domain.User, error)
 }
 
 type Cards interface {
@@ -33,9 +34,17 @@ type Cards interface {
 	Delete(ctx context.Context, userId int, cardId int) error
 }
 
+type Products interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Product, error)
+	Get(ctx context.Context, userId int, productId int) (domain.Product, error)
+	Create(ctx context.Context, userId int, product domain.Product) (int, error)
+	Delete(ctx context.Context, userId int, productId int) error
+}
+
 type Service struct {
 	Auth
 	Cards
+	Products
 }
 
 type Deps struct {

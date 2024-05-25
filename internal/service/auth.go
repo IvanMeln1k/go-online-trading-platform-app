@@ -283,3 +283,16 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (domain.
 		RefreshToken: refreshToken,
 	}, nil
 }
+
+func (s *AuthService) GetUser(ctx context.Context, id int) (domain.User, error) {
+	user, err := s.usersRepo.GetById(ctx, id)
+	if err != nil {
+		logrus.Errorf("Error get user from repositiry when getting user: %s", err)
+		if errors.Is(repository.ErrUserNotFound, err) {
+			return domain.User{}, ErrUserNotFound
+		}
+		return domain.User{}, ErrInternal
+	}
+
+	return user, nil
+}
