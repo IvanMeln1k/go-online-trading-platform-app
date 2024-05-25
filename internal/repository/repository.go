@@ -54,11 +54,18 @@ type Sessions interface {
 	// Deletes all user's sessions from DB by userId
 	DeleteAll(ctx context.Context, userId int) error
 }
+type Products interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Product, error)
+	Get(ctx context.Context, productId int) (domain.Product, error)
+	Create(ctx context.Context, product domain.Product) (int, error)
+	Delete(ctx context.Context, productId int) error
+}
 
 type Repository struct {
 	Users
 	Sessions
 	Cards
+	Products
 }
 
 func NewRepository(db *sqlx.DB, rdb *redis.Client) *Repository {
@@ -66,5 +73,6 @@ func NewRepository(db *sqlx.DB, rdb *redis.Client) *Repository {
 		Users:    NewUsersRepository(db),
 		Sessions: NewSessionsRepository(rdb),
 		Cards:    NewCardsRepository(db),
+		Products: NewProductsRepository(db),
 	}
 }

@@ -33,6 +33,17 @@ type Message struct {
 	Message string `json:"message"`
 }
 
+// Product defines model for Product.
+type Product struct {
+	Article      string `json:"article"`
+	Deleted      bool   `json:"deleted"`
+	Id           int    `json:"id"`
+	Manufacturer string `json:"manufacturer"`
+	Name         string `json:"name"`
+	Price        int    `json:"price"`
+	SellerId     int    `json:"sellerId"`
+}
+
 // LogoutParams defines parameters for Logout.
 type LogoutParams struct {
 	RefreshToken struct {
@@ -77,6 +88,9 @@ type VerificationParams struct {
 // AddCardJSONRequestBody defines body for AddCard for application/json ContentType.
 type AddCardJSONRequestBody = Card
 
+// AddProductJSONRequestBody defines body for AddProduct for application/json ContentType.
+type AddProductJSONRequestBody = Product
+
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
 type SignInJSONRequestBody SignInJSONBody
 
@@ -97,6 +111,18 @@ type ServerInterface interface {
 
 	// (GET /api/user/cards/{cardId})
 	GetTheCard(ctx echo.Context, cardId int) error
+
+	// (GET /api/user/products)
+	GetAllProducts(ctx echo.Context) error
+
+	// (POST /api/user/products)
+	AddProduct(ctx echo.Context) error
+
+	// (DELETE /api/user/products/{productId})
+	DeleteProduct(ctx echo.Context, productId int) error
+
+	// (GET /api/user/products/{productId})
+	GetTheProduct(ctx echo.Context, productId int) error
 
 	// (DELETE /auth//logout)
 	Logout(ctx echo.Context, params LogoutParams) error
@@ -175,6 +201,56 @@ func (w *ServerInterfaceWrapper) GetTheCard(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetTheCard(ctx, cardId)
+	return err
+}
+
+// GetAllProducts converts echo context to params.
+func (w *ServerInterfaceWrapper) GetAllProducts(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetAllProducts(ctx)
+	return err
+}
+
+// AddProduct converts echo context to params.
+func (w *ServerInterfaceWrapper) AddProduct(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.AddProduct(ctx)
+	return err
+}
+
+// DeleteProduct converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteProduct(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "productId" -------------
+	var productId int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", ctx.Param("productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter productId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteProduct(ctx, productId)
+	return err
+}
+
+// GetTheProduct converts echo context to params.
+func (w *ServerInterfaceWrapper) GetTheProduct(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "productId" -------------
+	var productId int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "productId", ctx.Param("productId"), &productId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter productId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetTheProduct(ctx, productId)
 	return err
 }
 
@@ -345,6 +421,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/user/cards", wrapper.AddCard)
 	router.DELETE(baseURL+"/api/user/cards/:cardId", wrapper.DeleteCard)
 	router.GET(baseURL+"/api/user/cards/:cardId", wrapper.GetTheCard)
+	router.GET(baseURL+"/api/user/products", wrapper.GetAllProducts)
+	router.POST(baseURL+"/api/user/products", wrapper.AddProduct)
+	router.DELETE(baseURL+"/api/user/products/:productId", wrapper.DeleteProduct)
+	router.GET(baseURL+"/api/user/products/:productId", wrapper.GetTheProduct)
 	router.DELETE(baseURL+"/auth//logout", wrapper.Logout)
 	router.GET(baseURL+"/auth/get-user", wrapper.GetUser)
 	router.DELETE(baseURL+"/auth/logout-all", wrapper.LogoutAll)
@@ -359,25 +439,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xaXW/bNhf+KwTfF9iNXLlbBmwudpFmQxdgQ4Omyc2QC0Y6ttlSJEtSXj3D/33gh2TZ",
+	"ohQ7zoe7+CoGeXxInvOc5zyks8CZKKTgwI3GowXW2RQK4j6eEZXbv1IJCcpQcKPZbGb/mLkEPMLaKMon",
+	"eJngnBgSnaB5Y5hyAxNQdpyXxS2o6FdKDeo8+rVlghV8KamCHI/+sr5rR2ELidth7eMmqXyI20+QGev+",
+	"T9CaTKB9tmI1sbGnjXUrw5j3CyXyMjNt70QZmjGIRw8YGGge+VYIBoT3RbAgvByTzJSqI46cFPHlpKIZ",
+	"xJ1qYGyX6FenCqtVvjd21/C7Omw7enYFysfCLp6DzhSVhgqOR/g9Z5TDwCiSUz4ZSEbMWKgCJ9hQY4Pa",
+	"ZXF6cY4TPAOlvaPXr4avhvagQgInkuIR/sENJVgSM3WZSomkqQVQmhGVu6EJmPam3oFBhDHkrZxLReyc",
+	"DZ+dPWXsLMwp0FJw7aHw/XDoaklwA9w5JlIymrkvp5+09V7VYqQEq01RA4X78H8FYzzC/0tXxZyGSk5d",
+	"GS/rUBOlyNylMhL79eNdllkGWtsvnwxPdtpw34aq8ouseKVBIS4MGouSu13/uGOk7rnwOTegOGFIg5qB",
+	"QqCU8IA3ZKIt2F0Yb2ztCB2BwmmeOxi0UHCa52d+3JYOaPNW5PMHO5JP7tJX5oMCbCsGCIY3u4LpSXJ6",
+	"TRjNnc8qnYcHp2WySTbpwgd16TFmmbKNtl/duAMcup0j2oadtwjIk0SRAgwou/QCU+vCkl1F2qMqkc3s",
+	"GlVC0ghFCwo3e2LunrFtAOnwyKGzTZhpb7regfk4/XbTVdHQ83cQu5PD7iBrJS+9WLxbYtSGcZVxsZp+",
+	"wD7Q3N1WWqPSvke5sS9Yqkj2K46QoJjouKinHkN31Il+aOkRTrSV+ljZHgXIHgCLElK6qKO7jRIJxr1i",
+	"ZIXIuxvcKrVHSbI/gfSqkv7UeWHyjaeuwVbP33TCZg6+7zhaKM00TZmYiNJswQKWQb7TSIN2jy2bWPrD",
+	"+4mDKBPiM4UVjBSMFejpR/EZeC+S1vvH2tfufMdbs440kefnk5Ph6ydRQtymWij6DxwWHgNmGnCcgBlY",
+	"oPVKZmcQ4bIrP/6AggUKQpn9MBaqIAaPwkjSfnV1E9eg6Jh2PfV2v9gSrf8WKo9OKtHxrGzD0OFyoxJq",
+	"y/odtzpGvfLmAcK6O2qvg0GWg0IDV57lBoSxLZjOXsm2YrtTxo6EdyS8fQgv5MylPnoT/OANkLFZbb8Q",
+	"hOmXBMONH94cuLq2luyz92TN+c7X0JcN9RC0JtI18HxQt9Roe//gjNDMtaEsXK9Dr9oEvrX8LcwdL4Y+",
+	"6j4ejahrOuEDyrv55dIbxEWVnTznezwz3VtO9UiijZJtSZlYoS7/+5yT4CmQ3NH/Al+CGZx58rdx/0oK",
+	"6X5H16KAQVhw4FrKG3RBzPSX9A363Rj5nrN5Ox3Lp3tWe0tyFMD2hCx6zmeE0RxVQjmtwISEQgdLsZsi",
+	"19V6KftrHZWyu9av5HPU+qNdnR71hvT4NOP/NaiOX1m6J7z2QQ7wdbxVxj8/xaqu+6VXIZeIMAUknyPf",
+	"3Q66dJuCp1McOejNO/TQddND/DbwpQQ1X10GTGg4rXfbGlov5sLoui2iGsFXaSkhpaEhWPpf+x3xoBtC",
+	"rf7cv/pZI5/9UjE8wlNj5ChNmcgImwptRj8Nh0O8vFn+GwAA///74Es+JyoAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

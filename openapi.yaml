@@ -445,9 +445,152 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-
+  /api/user/products:
+    get:
+      operationId: Get-all-products
+      description: "Get all products"
+      tags:
+        - Product
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+        "404":
+          description: "User not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    post:
+      operationId: Add-product
+      description: "Add product"
+      tags: 
+        - Product
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Product"
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - productId
+                properties:
+                  productId:
+                    type: integer
+        "400":
+          description: "Validation error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /api/user/products/{productId}:
+    delete:
+      operationId: Delete-product
+      description: "Delete product by id"
+      tags: 
+        - Product
+      parameters:
+      - name: productId
+        in: path
+        schema:
+          type: integer
+        required: true
+      responses:
+        "200":  
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+    get:
+      parameters:
+      - name: productId
+        in: path
+        schema:
+          type: integer
+        required: true
+      operationId: Get-the-product
+      description: "Get the product by id"
+      tags:
+        - Product
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
 components:
   schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - article
+        - name
+        - price
+        - manufacturer
+        - sellerId
+        - deleted
+      properties:
+        id:
+          type: integer
+        article:
+          type: string
+        name:
+          type: string
+        price:
+          type: integer
+        manufacturer:
+          type: string
+        sellerId:
+          type: integer
+        deleted:
+          type: boolean
     Card:
       type: object
       required:

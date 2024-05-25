@@ -34,9 +34,17 @@ type Cards interface {
 	Delete(ctx context.Context, userId int, cardId int) error
 }
 
+type Products interface {
+	GetAll(ctx context.Context, userId int) ([]domain.Product, error)
+	Get(ctx context.Context, userId int, productId int) (domain.Product, error)
+	Create(ctx context.Context, userId int, product domain.Product) (int, error)
+	Delete(ctx context.Context, userId int, productId int) error
+}
+
 type Service struct {
 	Auth
 	Cards
+	Products
 }
 
 type Deps struct {
