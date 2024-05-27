@@ -294,5 +294,10 @@ func (s *AuthService) GetUser(ctx context.Context, id int) (domain.User, error) 
 		return domain.User{}, ErrInternal
 	}
 
-	return user, nil
+	return domain.User{
+		Username:      user.Username,
+		Name:          user.Name,
+		EmailVerified: user.EmailVerified,
+		Role:          user.Role,
+	}, nil
 }

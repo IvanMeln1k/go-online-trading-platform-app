@@ -35,10 +35,11 @@ type Cards interface {
 }
 
 type Products interface {
-	GetAll(ctx context.Context, userId int) ([]domain.Product, error)
+	GetMyAll(ctx context.Context, userId int) ([]domain.Product, error)
 	Get(ctx context.Context, userId int, productId int) (domain.Product, error)
 	Create(ctx context.Context, userId int, product domain.Product) (int, error)
 	Delete(ctx context.Context, userId int, productId int) error
+	GetAll(ctx context.Context, filter domain.Filter) ([]domain.Product, error)
 }
 
 type Service struct {

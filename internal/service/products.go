@@ -22,7 +22,17 @@ func NewProductsService(ProductsRepo repository.Products, usersRepo repository.U
 	return &ProductsService{ProductsRepo, usersRepo}
 }
 
-func (s *ProductsService) GetAll(ctx context.Context, userId int) ([]domain.Product, error) {
+func (s *ProductsService) GetAll(ctx context.Context, filter domain.Filter) ([]domain.Product, error) {
+	products, err := s.productsRepo.GetAll(ctx, filter)
+	if err != nil {
+		logrus.Errorf("Service GetAllProducts calling repository error: %s", err)
+		return nil, ErrInternal
+	}
+
+	return products, nil
+}
+
+func (s *ProductsService) GetMyAll(ctx context.Context, userId int) ([]domain.Product, error) {
 	_, err := s.usersRepo.GetById(ctx, userId)
 	if err != nil {
 		logrus.Errorf("Service products error GetAll: %s", err)
@@ -31,7 +41,7 @@ func (s *ProductsService) GetAll(ctx context.Context, userId int) ([]domain.Prod
 		}
 		return nil, ErrInternal
 	}
-	products, err := s.productsRepo.GetAll(ctx, userId)
+	products, err := s.productsRepo.GetMyAll(ctx, userId)
 	if err != nil {
 		logrus.Errorf("Service GetAllProducts calling repository error: %s", err)
 		return nil, ErrInternal

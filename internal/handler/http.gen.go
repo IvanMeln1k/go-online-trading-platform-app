@@ -28,6 +28,18 @@ type Card struct {
 	UserId int    `json:"userId"`
 }
 
+// Filter defines model for Filter.
+type Filter struct {
+	Article      *string  `json:"article,omitempty"`
+	Limit        *int     `json:"limit,omitempty"`
+	Manufacturer *string  `json:"manufacturer,omitempty"`
+	MaxPrice     *int     `json:"maxPrice,omitempty"`
+	MinPrice     *int     `json:"minPrice,omitempty"`
+	Name         *string  `json:"name,omitempty"`
+	Offset       *int     `json:"offset,omitempty"`
+	Rating       *float32 `json:"rating,omitempty"`
+}
+
 // Message defines model for Message.
 type Message struct {
 	Message string `json:"message"`
@@ -35,13 +47,19 @@ type Message struct {
 
 // Product defines model for Product.
 type Product struct {
-	Article      string `json:"article"`
-	Deleted      bool   `json:"deleted"`
-	Id           int    `json:"id"`
-	Manufacturer string `json:"manufacturer"`
-	Name         string `json:"name"`
-	Price        int    `json:"price"`
-	SellerId     int    `json:"sellerId"`
+	Article      string  `json:"article"`
+	Deleted      bool    `json:"deleted"`
+	Id           int     `json:"id"`
+	Manufacturer string  `json:"manufacturer"`
+	Name         string  `json:"name"`
+	Price        int     `json:"price"`
+	Rating       float32 `json:"rating"`
+	SellerId     int     `json:"sellerId"`
+}
+
+// GetAllProductsParams defines parameters for GetAllProducts.
+type GetAllProductsParams struct {
+	Params Filter `form:"params" json:"params"`
 }
 
 // LogoutParams defines parameters for Logout.
@@ -113,7 +131,7 @@ type ServerInterface interface {
 	GetTheCard(ctx echo.Context, cardId int) error
 
 	// (GET /api/user/products)
-	GetAllProducts(ctx echo.Context) error
+	GetMyAllProducts(ctx echo.Context) error
 
 	// (POST /api/user/products)
 	AddProduct(ctx echo.Context) error
@@ -123,6 +141,9 @@ type ServerInterface interface {
 
 	// (GET /api/user/products/{productId})
 	GetTheProduct(ctx echo.Context, productId int) error
+
+	// (GET /api/user/search)
+	GetAllProducts(ctx echo.Context, params GetAllProductsParams) error
 
 	// (DELETE /auth//logout)
 	Logout(ctx echo.Context, params LogoutParams) error
@@ -204,12 +225,12 @@ func (w *ServerInterfaceWrapper) GetTheCard(ctx echo.Context) error {
 	return err
 }
 
-// GetAllProducts converts echo context to params.
-func (w *ServerInterfaceWrapper) GetAllProducts(ctx echo.Context) error {
+// GetMyAllProducts converts echo context to params.
+func (w *ServerInterfaceWrapper) GetMyAllProducts(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetAllProducts(ctx)
+	err = w.Handler.GetMyAllProducts(ctx)
 	return err
 }
 
@@ -251,6 +272,24 @@ func (w *ServerInterfaceWrapper) GetTheProduct(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetTheProduct(ctx, productId)
+	return err
+}
+
+// GetAllProducts converts echo context to params.
+func (w *ServerInterfaceWrapper) GetAllProducts(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAllProductsParams
+	// ------------- Required query parameter "params" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "params", ctx.QueryParams(), &params.Params)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter params: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetAllProducts(ctx, params)
 	return err
 }
 
@@ -421,10 +460,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/api/user/cards", wrapper.AddCard)
 	router.DELETE(baseURL+"/api/user/cards/:cardId", wrapper.DeleteCard)
 	router.GET(baseURL+"/api/user/cards/:cardId", wrapper.GetTheCard)
-	router.GET(baseURL+"/api/user/products", wrapper.GetAllProducts)
+	router.GET(baseURL+"/api/user/products", wrapper.GetMyAllProducts)
 	router.POST(baseURL+"/api/user/products", wrapper.AddProduct)
 	router.DELETE(baseURL+"/api/user/products/:productId", wrapper.DeleteProduct)
 	router.GET(baseURL+"/api/user/products/:productId", wrapper.GetTheProduct)
+	router.GET(baseURL+"/api/user/search", wrapper.GetAllProducts)
 	router.DELETE(baseURL+"/auth//logout", wrapper.Logout)
 	router.GET(baseURL+"/auth/get-user", wrapper.GetUser)
 	router.DELETE(baseURL+"/auth/logout-all", wrapper.LogoutAll)
@@ -439,28 +479,30 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/+xa32/bthP/VwR+v8Be5MrdMmBzsQc327oAK2o0TV6GPDDS2WZLkSxJefEM/+8Df0iW",
+	"LUqxYzdxFj/ZII/H493nPncmvUApzwVnwLRCgwVS6RRybL+eY5mZTyG5AKkJ2NF0NjMfei4ADZDSkrAJ",
+	"WsYowxoHJ0hWGyZMwwSkGWdFfgsyuKRQIC+Cy5YxkvC1IBIyNPjL6K4UeRNia2Gl4yYudfDbz5Bqo/53",
+	"QrXbef1oWGqSUgiaRElOdPggOWbFGKe6kC3HyfHdSJIUWpYT1jHLcB42iI/HClosklgbqdWcd5FxX8Mb",
+	"70EpPIGmO/LVxMbuG1EoBUO+HkmeFanezdkZUNBQB8At5xQw68LTvWFodaVod3+rJ2OkgNJdYFoe2BtS",
+	"brtheE3vyg+VHU0Pm60IG3NjRQYqlURowhkaoA+MEgY9LXFG2KQnKNZjLnMUI020cXybxHB0gWI0A6mc",
+	"otev+q/6FnICGBYEDdAPdihGAuupjWaCBUlMyiUplpkdmjh0rhv1DnSEKY2clFVpjsaZ8aOZHVJ67uck",
+	"KMGZcnD5vt+37MOZBmYVYyEoSe3i5LMy2kv2CpBWaRTRkNsv/5cwRgP0v2RFf4nnvsQS3ypVsJR4Hsqd",
+	"pYVq/XiXRZqCUmbxWf9sJ4O7DCpTNLDjlQIZMa6jMS+YtfrHHT31wI0vmAbJMI0UyBnICKTknmHwRBnU",
+	"WzfemPziKgCFYZZZGDRQMMyyczducgiUfsuz+cGO5IK7dCl6UIBtRQVe8GZXMD1KTK8xJZnVWYbz+OC0",
+	"jDfJJlk4py4dxgxlNtH2qx23gItu5xFpws5JeOQJLHEOGqTZeoGIUWHIrmTvQRnIenS1LCCuuaIBhZs9",
+	"MfdA39aAdHzk0Fom9LQzXO9Af5o+33CVNPT0FcRYctwVZC3lhWso728xKsEAct7Ph5SOVgIHrAR1+7bq",
+	"NsoO+dRw7AuX0pPdPYcPUKjtGFVT36LzqAJ96ObDn2ir/mMle2pB9gBYkJKSReXdbXoRL9zZjqwQeX+J",
+	"W4X21JTsTyCdfUl36Fxr8sxDV2Orpy863pijrztrtKAAy3S6V5+y3qWEcPS1ADmvAcmIqE4UdbnB34zu",
+	"j6yX1RM9K3gWepoklE94obcoUgbJ36lIgbK3gZsY/dPpCWMz5fwLgRU4JYwlqOkn/gVYJ0TX0bO27N7L",
+	"6DXpQI/z9OXurP/6URp1ZkLNJfkHjguPHjM1OE5A9wzQOrnSCgQ48sqNH5CuIMeEmi9jLnOs0cCPxM2n",
+	"AztxDZKMSdt7Reuzg+Qtzx/mpC2rNsBeSVaPCqWl64b5zXZs+Y8GMTbENbw49uphSrdgMFNjt2KxIaUn",
+	"IjsR2T5E5mNmQx+8gPjoBCJtotps+fz0S4LhxquwBVebafE+tsdryne+/XjZUPdOqyNdAct6VakMlu2P",
+	"Viia2TKU+lsdX6A2gW8kf/Nzp/sI53Xnj5rXFZmwHmHt/HLpBMLNkpm8YHvcbj64TRJYqb+5zO5P2VJF",
+	"tSKUqMv/PufEaAo4s/S/QJege+eO/I3f73Au7B84FM+h5zfs2ZLyJhphPf0leRP9obX4wOi8GY7l493m",
+	"vsVZ5MH2iCx6wWaYkiwqu+OkBFPEZXS0FLvZ5NpcL0R3rkeFaM/1K/EUub7PT6IOnjjMz6Jqg007vz3N",
+	"uP+tVf4rCntz3DzIET7KNNL458fY1Va/5MrHMsJUAs7mkatuR5269YantTmy0Ju39EPXdQ1b3fxqX3Aa",
+	"zwUVtF7MD0ZbbSOiIrgThhIS4guCof+15+ujLghV92f/bGqEXPQLSdEATbUWgyShPMV0ypUe/NTv99Hy",
+	"ZvlvAAAA//8+3VKs0i0AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

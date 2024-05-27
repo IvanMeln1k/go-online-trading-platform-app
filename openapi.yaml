@@ -138,7 +138,6 @@ paths:
                   - username 
                   - name
                   - email
-                  - password
                   - emailVerified
                   - role
                 properties:
@@ -149,8 +148,6 @@ paths:
                   email:
                     type: string
                     format: email
-                  password:
-                    type: string
                   emailVerified:
                     type: boolean
                   role:
@@ -445,9 +442,45 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Message"
-  /api/user/products:
+  /api/user/search:
     get:
       operationId: Get-all-products
+      description: "Get all products"
+      tags:
+        - Product
+      parameters:
+      - name: params
+        in: query
+        required: true
+        schema:
+          $ref: "#/components/schemas/Filter"
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+        "404":
+          description: "Product not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "500":
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+  /api/user/products:
+    get:
+      operationId: Get-My-all-products
       description: "Get all products"
       tags:
         - Product
@@ -566,6 +599,25 @@ paths:
                 $ref: "#/components/schemas/Message"
 components:
   schemas:
+    Filter:
+      type: object
+      properties:
+        article:
+            type: string
+        name:
+          type: string
+        maxPrice:
+          type: integer
+        minPrice:
+          type: integer
+        manufacturer:
+          type: string
+        rating:
+          type: number
+        limit:
+          type: integer
+        offset:
+          type: integer
     Product:
       type: object
       required:
@@ -576,6 +628,7 @@ components:
         - manufacturer
         - sellerId
         - deleted
+        - rating
       properties:
         id:
           type: integer
@@ -591,6 +644,8 @@ components:
           type: integer
         deleted:
           type: boolean
+        rating:
+          type: number
     Card:
       type: object
       required:
