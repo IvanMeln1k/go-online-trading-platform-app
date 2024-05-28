@@ -26,14 +26,14 @@ func (h *Handler) GetMyAllProducts(ctx echo.Context) error {
 }
 func (h *Handler) GetAllProducts(ctx echo.Context, params GetAllProductsParams) error {
 	products, err := h.services.Products.GetAll(ctx.Request().Context(), domain.Filter{
-		Article:      *params.Params.Article,
-		Name:         *params.Params.Name,
-		MinPrice:     *params.Params.MinPrice,
-		MaxPrice:     *params.Params.MaxPrice,
-		Manufacturer: *params.Params.Manufacturer,
-		Rating:       *params.Params.Rating,
-		Limit:        *params.Params.Limit,
-		Offset:       *params.Params.Offset,
+		Article:      params.Params.Article,
+		Name:         params.Params.Name,
+		MinPrice:     params.Params.MinPrice,
+		MaxPrice:     params.Params.MaxPrice,
+		Manufacturer: params.Params.Manufacturer,
+		Rating:       params.Params.Rating,
+		Limit:        params.Params.Limit,
+		Offset:       params.Params.Offset,
 	})
 	if err != nil {
 		logrus.Errorf("error getting products by filter: %s", err)

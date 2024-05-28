@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/IvanMeln1k/go-online-trading-platform-app/internal/domain"
 	"github.com/jmoiron/sqlx"
@@ -72,11 +74,52 @@ func (r *ProductsRepository) Delete(ctx context.Context, productId int) error {
 }
 
 func (r *ProductsRepository) GetAll(ctx context.Context, filter domain.Filter) ([]domain.Product, error) {
-	products := []domain.Product{}
-	err := r.db.Select(&products, "SELECT * FROM products WHERE user_id = $1", userId)
+	err := filter.Fill_defaults()
 	if err != nil {
-		logrus.Errorf("Error get products from postgresql: %s", err)
+		logrus.Errorf("Error limit too high: %s", err)
 		return nil, ErrInternal
 	}
+
+	var products []domain.Product
+	var names []string
+	var values []interface{}
+	argId := 1
+
+	addProp := func(name string, sign string, value interface{}) {
+		names = append(names, fmt.Sprintf("%s %s $%d", name, sign, argId))
+		values = append(values, value)
+		argId++
+	}
+
+	if filter.Article != nil {
+		addProp("article", "=", *filter.Article)
+	}
+	if filter.Name != nil {
+		addProp("name", "=", *filter.Name)
+	}
+	if filter.MinPrice != nil {
+		addProp("price", ">", *filter.MinPrice)
+	}
+	if filter.MaxPrice != nil {
+		addProp("price", "<", *filter.MaxPrice)
+	}
+	if filter.Manufacturer != nil {
+		addProp("manafacturer", "=", *filter.Manufacturer)
+	}
+	if filter.Rating != nil {
+		addProp("article", "=", *filter.Rating)
+	}
+
+	setQuery := strings.Join(names, ", ")
+	values = append(values, *filter.Limit, *filter.Offset)
+	query := fmt.Sprintf(`SELECT * FROM products WHERE %s ORDER BY rating DESC LIMIT $%d OFFSET $%d`,
+		setQuery, argId, argId+1)
+	err = r.db.Select(&products, query, values...)
+	if err != nil {
+		logrus.Errorf("sql-query: %s", query)
+		logrus.Errorf("error get products: %s", err)
+		return products, ErrInternal
+	}
+
 	return products, nil
 }
