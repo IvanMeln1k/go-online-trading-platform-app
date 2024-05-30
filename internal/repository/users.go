@@ -77,7 +77,7 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 	argId := 1
 
 	addProp := func(name string, value interface{}) {
-		names = append(names, fmt.Sprintf("%s = $%d", name, argId))
+		names = append(names, fmt.Sprintf("%s=$%d", name, argId))
 		values = append(values, value)
 		argId++
 	}
@@ -94,11 +94,11 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 	if data.Password != nil {
 		addProp("password", *data.Password)
 	}
-	if data.EmailVefiried != nil {
-		addProp("email_verified", *data.EmailVefiried)
-	}
 	if data.Role != nil {
 		addProp("role", *data.Role)
+	}
+	if data.EmailVefiried != nil {
+		addProp("email_verified", *data.EmailVefiried)
 	}
 
 	setQuery := strings.Join(names, ", ")
@@ -107,7 +107,6 @@ func (r *UsersRepository) Update(ctx context.Context, id int, data domain.UserUp
 		usersTable, setQuery, argId)
 	err := r.db.Get(&user, query, values...)
 	if err != nil {
-		logrus.Errorf("sql-query: %s", query)
 		logrus.Errorf("error update user: %s", err)
 		if errors.Is(err, sql.ErrNoRows) {
 			return user, ErrUserNotFound

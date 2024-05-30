@@ -106,8 +106,8 @@ func TestUsersPostgres_GetById(t *testing.T) {
 				id: 1,
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password)
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password", "role"}).
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password, user.Role)
 				mock.ExpectQuery("SELECT (.+) FROM users WHERE id=(.+)").WithArgs(args.id).
 					WillReturnRows(rows)
 			},
@@ -117,6 +117,7 @@ func TestUsersPostgres_GetById(t *testing.T) {
 				Name:     "name",
 				Email:    "email",
 				Password: "password",
+				Role:     domain.RoleUser,
 			},
 			wantErr: nil,
 		},
@@ -180,10 +181,11 @@ func TestUsersPostgres_GetByEmail(t *testing.T) {
 				Name:     "name",
 				Email:    "email",
 				Password: "password",
+				Role:     domain.RoleSeller,
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password)
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password", "role"}).
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password, user.Role)
 				mock.ExpectQuery("SELECT (.+) FROM users WHERE email=(.+)").WithArgs(args.email).
 					WillReturnRows(rows)
 			},
@@ -259,8 +261,8 @@ func TestUsersPostres_GetByUserName(t *testing.T) {
 				username: "username",
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password)
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password", "role"}).
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password, user.Role)
 				mock.ExpectQuery("SELECT (.+) FROM users WHERE username=(.+)").WithArgs(args.username).
 					WillReturnRows(rows)
 			},
@@ -270,6 +272,7 @@ func TestUsersPostres_GetByUserName(t *testing.T) {
 				Name:     "name",
 				Email:    "email",
 				Password: "password",
+				Role:     domain.RoleManager,
 			},
 			wantErr: nil,
 		},
@@ -347,16 +350,17 @@ func TestUsersPostgres_Update(t *testing.T) {
 					Email:         stringPointer("email"),
 					Password:      stringPointer("password"),
 					EmailVefiried: boolPointer(true),
+					Role:          stringPointer(domain.RoleManager),
 				},
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password",
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password", "role",
 					"email_verified"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password,
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password, user.Role,
 						user.EmailVerified)
 				mock.ExpectQuery("UPDATE users u SET (.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Username, *args.user.Name, *args.user.Email,
-						*args.user.Password, *args.user.EmailVefiried, args.id).
+						*args.user.Password, *args.user.Role, *args.user.EmailVefiried, args.id).
 					WillReturnRows(rows)
 			},
 			want: domain.User{
@@ -365,6 +369,7 @@ func TestUsersPostgres_Update(t *testing.T) {
 				Name:          "name",
 				Email:         "email",
 				Password:      "password",
+				Role:          domain.RoleManager,
 				EmailVerified: true,
 			},
 			wantErr: nil,
@@ -377,11 +382,11 @@ func TestUsersPostgres_Update(t *testing.T) {
 				},
 			},
 			mockBehavior: func(args args, user domain.User) {
-				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password",
+				rows := mock.NewRows([]string{"id", "username", "name", "email", "hash_password", "role",
 					"email_verified"}).
-					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password,
+					AddRow(user.Id, user.Username, user.Name, user.Email, user.Password, user.Role,
 						user.EmailVerified)
-				mock.ExpectQuery("UPDATE users u SET email = (.+) WHERE id=(.+) RETURNING (.+)").
+				mock.ExpectQuery("UPDATE users u SET email=(.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Email, args.id).WillReturnRows(rows)
 			},
 			want: domain.User{
@@ -402,7 +407,7 @@ func TestUsersPostgres_Update(t *testing.T) {
 				},
 			},
 			mockBehavior: func(args args, user domain.User) {
-				mock.ExpectQuery("UPDATE users u SET email = (.+) WHERE id=(.+) RETURNING (.+)").
+				mock.ExpectQuery("UPDATE users u SET email=(.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Email, args.id).WillReturnError(sql.ErrNoRows)
 			},
 			want:    domain.User{},
@@ -417,7 +422,7 @@ func TestUsersPostgres_Update(t *testing.T) {
 				id: 1,
 			},
 			mockBehavior: func(args args, user domain.User) {
-				mock.ExpectQuery("UPDATE users u SET email = (.+) WHERE id=(.+) RETURNING (.+)").
+				mock.ExpectQuery("UPDATE users u SET email=(.+) WHERE id=(.+) RETURNING (.+)").
 					WithArgs(*args.user.Email, args.id).WillReturnError(errors.New("some error"))
 			},
 			want:    domain.User{},

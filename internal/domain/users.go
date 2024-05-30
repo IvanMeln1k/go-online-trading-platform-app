@@ -8,6 +8,12 @@ var (
 	ErrUserUpdateHasNoValues = errors.New("user update has no values")
 )
 
+const (
+	RoleUser    = "user"
+	RoleManager = "manager"
+	RoleSeller  = "seller"
+)
+
 type User struct {
 	Id            int    `json:"id"`
 	Username      string `json:"username" validate:"required"`
