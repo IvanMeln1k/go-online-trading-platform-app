@@ -9,17 +9,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func (h *Handler) GetAllProducts(ctx echo.Context) error {
+func (h *Handler) GetMyAllProducts(ctx echo.Context) error {
 	id, err := h.getUserId(ctx)
 	if err != nil {
 		return err
 	}
-	products, err := h.services.Products.GetAll(ctx.Request().Context(), id)
+	products, err := h.services.Products.GetMyAll(ctx.Request().Context(), id)
 	if err != nil {
 		logrus.Errorf("error getting products: %s", err)
 		if errors.Is(service.ErrUserNotFound, err) {
 			return echo.NewHTTPError(404, Message{Message: "User not found"})
 		}
+		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
+	}
+	return ctx.JSON(200, map[string]interface{}{"products": products})
+}
+func (h *Handler) GetAllProducts(ctx echo.Context, params GetAllProductsParams) error {
+	products, err := h.services.Products.GetAll(ctx.Request().Context(), domain.Filter{
+		Article:      params.Params.Article,
+		Name:         params.Params.Name,
+		MinPrice:     params.Params.MinPrice,
+		MaxPrice:     params.Params.MaxPrice,
+		Manufacturer: params.Params.Manufacturer,
+		Rating:       params.Params.Rating,
+		Limit:        params.Params.Limit,
+		Offset:       params.Params.Offset,
+	})
+	if err != nil {
+		logrus.Errorf("error getting products by filter: %s", err)
 		return echo.NewHTTPError(500, Message{Message: "Internal server error"})
 	}
 	return ctx.JSON(200, map[string]interface{}{"products": products})
@@ -44,6 +61,7 @@ func (h *Handler) AddProduct(ctx echo.Context) error {
 		Manufacturer: ProductData.Manufacturer,
 		SellerId:     ProductData.SellerId,
 		Deleted:      ProductData.Deleted,
+		Rating:       ProductData.Rating,
 	})
 	if err != nil {
 		logrus.Errorf("Handler createProduct error: %s", err)

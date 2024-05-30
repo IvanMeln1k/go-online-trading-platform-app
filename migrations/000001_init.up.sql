@@ -57,7 +57,17 @@ CREATE TABLE products (
     manufacturer VARCHAR(1024),
     seller_id BIGINT NOT NULL,
     deleted BOOL NOT NULL DEFAULT false,
+    rating FLOAT DEFAULT 0 as (SUM(user_rate)/COUNT(user_id)),
     FOREIGN KEY (seller_id) REFERENCES sellers (user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_rate) REFERENCES comments (user_rate) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES comments (user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE comments (
+    user_id BIGSERIAL PRIMARY KEY,
+    user_rate FLOAT DEFAULT 0,
+    comment TEXT,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE products_warehouses (

@@ -55,10 +55,11 @@ type Sessions interface {
 	DeleteAll(ctx context.Context, userId int) error
 }
 type Products interface {
-	GetAll(ctx context.Context, userId int) ([]domain.Product, error)
+	GetMyAll(ctx context.Context, userId int) ([]domain.Product, error)
 	Get(ctx context.Context, productId int) (domain.Product, error)
 	Create(ctx context.Context, product domain.Product) (int, error)
 	Delete(ctx context.Context, productId int) error
+	GetAll(ctx context.Context, filter domain.Filter) ([]domain.Product, error)
 }
 
 type Repository struct {
