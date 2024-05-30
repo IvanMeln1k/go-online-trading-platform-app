@@ -18,8 +18,8 @@ var (
 
 type TokenManagerI interface {
 	CreateRefreshToken() (string, error)
-	CreateAccessToken(userId int) (string, error)
-	ParseAccessToken(tokenString string) (int, error)
+	CreateAccessToken(userId int, role string) (string, error)
+	ParseAccessToken(tokenString string) (int, string, error)
 	CreateEmailToken(email string) (string, error)
 	ParseEmailToken(tokenString string) (string, error)
 }
@@ -51,9 +51,10 @@ func (tm *TokenManager) CreateRefreshToken() (string, error) {
 	return fmt.Sprintf("%x", b), nil
 }
 
-type StandardClaimsWithUserId struct {
+type StandardClaimsUser struct {
 	jwt.StandardClaims
 	UserId int `json:"user_id"`
+	Role   string
 }
 
 type StandardClaimsWithEmail struct {
@@ -80,10 +81,11 @@ func (tm *TokenManager) CreateEmailToken(email string) (string, error) {
 	})
 }
 
-func (tm *TokenManager) CreateAccessToken(userId int) (string, error) {
-	return tm.createJWTToken(&StandardClaimsWithUserId{
+func (tm *TokenManager) CreateAccessToken(userId int, role string) (string, error) {
+	return tm.createJWTToken(&StandardClaimsUser{
 		tm.getStandartClaims(tm.accessTTL),
 		userId,
+		role,
 	})
 }
 
@@ -115,13 +117,13 @@ func (tm *TokenManager) ParseEmailToken(tokenString string) (string, error) {
 	return claims.Email, nil
 }
 
-func (tm *TokenManager) ParseAccessToken(tokenString string) (int, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &StandardClaimsWithUserId{},
+func (tm *TokenManager) ParseAccessToken(tokenString string) (int, string, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &StandardClaimsUser{},
 		func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, ErrTokenInvalid
 			}
-			claims, ok := t.Claims.(*StandardClaimsWithUserId)
+			claims, ok := t.Claims.(*StandardClaimsUser)
 			if !ok {
 				return nil, ErrTokenInvalid
 			}
@@ -132,13 +134,13 @@ func (tm *TokenManager) ParseAccessToken(tokenString string) (int, error) {
 		})
 
 	if err != nil {
-		return 0, err
+		return 0, "", err
 	}
 
-	claims, ok := token.Claims.(*StandardClaimsWithUserId)
+	claims, ok := token.Claims.(*StandardClaimsUser)
 	if !ok {
-		return 0, ErrTokenInvalid
+		return 0, "", ErrTokenInvalid
 	}
 
-	return claims.UserId, nil
+	return claims.UserId, claims.Role, nil
 }

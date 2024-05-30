@@ -28,7 +28,7 @@ func (h *Handler) userIdentity(next echo.HandlerFunc) echo.HandlerFunc {
 			return newErrorResponse(401, "Not authorized")
 		}
 
-		userId, err := h.tokenManager.ParseAccessToken(params[1])
+		userId, role, err := h.tokenManager.ParseAccessToken(params[1])
 		if err != nil {
 			logrus.Errorf("error parsing token: %s", err)
 			if errors.Is(tokens.ErrTokenExpired, err) {
@@ -40,6 +40,7 @@ func (h *Handler) userIdentity(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		c.Set("userId", userId)
+		c.Set("role", role)
 
 		return next(c)
 	}
@@ -54,4 +55,15 @@ func (h *Handler) getUserId(c echo.Context) (int, error) {
 	}
 
 	return idInt, nil
+}
+
+func (h *Handler) getRole(c echo.Context) (string, error) {
+	role := c.Get("role")
+
+	roleString, ok := role.(string)
+	if !ok {
+		return "", newErrorResponse(401, "Unautharized")
+	}
+
+	return roleString, nil
 }
